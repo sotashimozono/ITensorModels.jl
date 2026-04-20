@@ -1,7 +1,7 @@
 ENV["GKSwstype"] = "100"
 
 using ITensorModels, Test
-const dirs = []
+const dirs = ["base"]
 
 const FIG_BASE = joinpath(pkgdir(ITensorModels), "docs", "src", "assets")
 const PATHS = Dict()
