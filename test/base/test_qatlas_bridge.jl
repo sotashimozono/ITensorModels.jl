@@ -1,37 +1,52 @@
-using ITensorModels: TFIM, to_qatlas, from_qatlas, thermal_energy
+using ITensorModels: TFIM, to_qatlas, from_qatlas
 using ITensors: SiteType
-using QAtlas: QAtlas
+import QAtlas
+using QAtlas: Energy, MassGap, Infinite, OBC
 
-@testset "to_qatlas / from_qatlas" begin
-    # Qubit site → direct Pauli mapping (no rescale).
+# These tests are deliberately non-tautological: they validate the
+# QAtlas bridge against (a) analytic TFIM results and (b) agreement
+# between the ITensorModels + ext forwarder and a direct QAtlas call on
+# a hand-written struct.
+
+@testset "to_qatlas round-trip" begin
     m_q = TFIM(; J=0.4, h=0.6, site=SiteType("Qubit"))
-    qm = to_qatlas(m_q)
-    @test qm isa QAtlas.TFIM
-    @test qm.J == 0.4
-    @test qm.h == 0.6
+    @test to_qatlas(m_q).J == 0.4 && to_qatlas(m_q).h == 0.6
 
-    # S=1/2 site → J/4, h/2 rescale.
-    m_s = TFIM(; J=1.0, h=0.5)
-    qm2 = to_qatlas(m_s)
-    @test qm2.J ≈ 0.25
-    @test qm2.h ≈ 0.25
-
-    back = from_qatlas(qm)
-    @test back.J == 0.4
-    @test back.h == 0.6
-    @test back.site === SiteType("Qubit")
+    back = from_qatlas(to_qatlas(m_q))
+    @test back.J == 0.4 && back.h == 0.6 && back.site === SiteType("Qubit")
 end
 
-@testset "thermal_energy equivalence across SiteTypes" begin
-    # TFIM(J=1, h=0.5; S=1/2) ≡ TFIM(J=0.25, h=0.25; Qubit) in QAtlas units.
-    m_s = TFIM(; J=1.0, h=0.5)
-    m_q = TFIM(; J=0.25, h=0.25, site=SiteType("Qubit"))
-    @test thermal_energy(m_s, QAtlas.Infinite(); beta=2.0) ≈
-        thermal_energy(m_q, QAtlas.Infinite(); beta=2.0) rtol = 1e-12
+@testset "MassGap matches analytic 2|h-J|" begin
+    for (J, h) in [(1.0, 0.3), (1.0, 1.7), (0.8, 0.5)]
+        m = TFIM(; J=J, h=h, site=SiteType("Qubit"))
+        Δ = QAtlas.fetch(m, MassGap(), Infinite())
+        @test Δ ≈ 2 * abs(h - J) rtol = 1e-12
+    end
+end
 
-    ε = thermal_energy(m_q, QAtlas.Infinite(); beta=1.0)
-    @test isfinite(ε)
-    @test ε < 0
+@testset "SiteType unit conversion: S=1/2 ≡ Qubit(J/4, h/2)" begin
+    # Same physical Hamiltonian expressed in two conventions.
+    J, h = 1.0, 0.5
+    m_s = TFIM(; J=J, h=h)                                 # S=1/2 default
+    m_q = TFIM(; J=J / 4, h=h / 2, site=SiteType("Qubit"))  # equivalent Pauli
+
+    @test QAtlas.fetch(m_s, Energy(), Infinite(); beta=2.0) ≈
+        QAtlas.fetch(m_q, Energy(), Infinite(); beta=2.0) rtol = 1e-12
+    @test QAtlas.fetch(m_s, MassGap(), Infinite()) ≈
+        QAtlas.fetch(m_q, MassGap(), Infinite()) rtol = 1e-12
+end
+
+@testset "Forwarder parity with direct QAtlas call" begin
+    # Hand-written QAtlas struct with the Pauli couplings that match a
+    # :S=1/2 ITensorModels.TFIM(J=1, h=0.5). The forwarder's output must
+    # equal a direct fetch on the Pauli struct.
+    m = TFIM(; J=1.0, h=0.5)
+    qm_direct = QAtlas.TFIM(; J=0.25, h=0.25)
+
+    @test QAtlas.fetch(m, Energy(), OBC(12); beta=3.0) ≈
+        QAtlas.fetch(qm_direct, Energy(), OBC(12); beta=3.0) rtol = 1e-12
+    @test QAtlas.fetch(m, MassGap(), OBC(12)) ≈
+        QAtlas.fetch(qm_direct, MassGap(), OBC(12)) rtol = 1e-12
 end
 
 @testset "to_qatlas undefined for unsupported SiteType" begin

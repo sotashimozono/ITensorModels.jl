@@ -17,7 +17,7 @@ ITensorModels.to_qatlas(m::ITensorModels.TFIM) = ITensorModels.to_qatlas(m, m.si
 
 # Spin-½ site: our H = -J Σ SzSz - h Σ Sx = -(J/4) Σ σzσz - (h/2) Σ σx.
 function ITensorModels.to_qatlas(m::ITensorModels.TFIM, ::SiteType"S=1/2")
-    return QAtlas.TFIM(; J=(m.J / 4), h=(m.h / 2))
+    return QAtlas.TFIM(; J=m.J / 4, h=m.h / 2)
 end
 
 # Qubit site: operators already Pauli, no rescaling.
@@ -35,10 +35,22 @@ function ITensorModels.from_qatlas(qm::QAtlas.TFIM)
     return ITensorModels.TFIM(; J=qm.J, h=qm.h, site=SiteType("Qubit"))
 end
 
-# --- Thermal quantities -------------------------------------------------
+# --- fetch forwarder ----------------------------------------------------
+#
+# Route `QAtlas.fetch` calls that take an ITensorModels model through
+# `to_qatlas`.  Every concrete-struct method
+# `fetch(::QAtlas.Model, ::Quantity, ::BC; ...)` registered inside QAtlas
+# becomes available for free on any `AbstractLatticeModel` whose site
+# has a `to_qatlas` implementation.  Adding a method to `QAtlas.fetch`
+# with an ITensorModels-owned argument type is not type piracy.
 
-function ITensorModels.thermal_energy(m::ITensorModels.TFIM, bc; beta)
-    return QAtlas.fetch(ITensorModels.to_qatlas(m), QAtlas.Energy(), bc; beta=Float64(beta))
+function QAtlas.fetch(
+    m::ITensorModels.AbstractLatticeModel,
+    q::QAtlas.AbstractQuantity,
+    bc::QAtlas.BoundaryCondition;
+    kwargs...,
+)
+    return QAtlas.fetch(ITensorModels.to_qatlas(m), q, bc; kwargs...)
 end
 
 end # module QAtlasExt
