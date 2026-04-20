@@ -51,8 +51,7 @@ end
 
     rng = MersenneTwister(0)
     ψ = random_mps(rng, sites; linkdims=4)
-    @test (inner(ψ', H_full, ψ) - inner(ψ', H_half, ψ)) ≈
-        inner(ψ', H_diff, ψ) rtol = 1e-10
+    @test (inner(ψ', H_full, ψ) - inner(ψ', H_half, ψ)) ≈ inner(ψ', H_diff, ψ) rtol = 1e-10
 end
 
 @testset "build_opsum: phys sites with env padding (auto tag lookup)" begin
@@ -82,6 +81,7 @@ end
 end
 
 @testset "unknown convention errors" begin
-    @test_throws ErrorException build_opsum(TFIM(; convention=:bogus),
-        PhysInds(N); boundary=:full)
+    @test_throws ErrorException build_opsum(
+        TFIM(; convention=:bogus), PhysInds(N); boundary=:full
+    )
 end

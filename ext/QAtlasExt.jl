@@ -16,7 +16,7 @@ function ITensorModels.to_qatlas(m::ITensorModels.TFIM)
         return QAtlas.TFIM(; J=m.J, h=m.h)
     elseif m.convention === :spin_half
         # spin-1/2: H = -J Σ SzSz - h Σ Sx = -(J/4) Σ σzσz - (h/2) Σ σx
-        return QAtlas.TFIM(; J=m.J / 4, h=m.h / 2)
+        return QAtlas.TFIM(; J=(m.J / 4), h=(m.h / 2))
     else
         error("to_qatlas: unknown convention $(m.convention)")
     end

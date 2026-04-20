@@ -1,5 +1,5 @@
 using ITensorModels: TFIM, to_qatlas, from_qatlas, thermal_energy
-import QAtlas
+using QAtlas: QAtlas
 
 @testset "to_qatlas / from_qatlas" begin
     m_p = TFIM(; J=0.4, h=0.6, convention=:pauli)
