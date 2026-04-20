@@ -1,7 +1,7 @@
 using ITensorModels: TFIM, build_opsum
 using ITensors, ITensorMPS
 using ITensors: SiteType
-import QAtlas
+using QAtlas: QAtlas
 using QAtlas: Energy, OBC, Infinite
 using Random
 

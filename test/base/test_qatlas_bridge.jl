@@ -1,6 +1,6 @@
 using ITensorModels: TFIM, to_qatlas, from_qatlas
 using ITensors: SiteType
-import QAtlas
+using QAtlas: QAtlas
 using QAtlas: Energy, MassGap, Infinite, OBC
 
 # These tests are deliberately non-tautological: they validate the
@@ -45,8 +45,8 @@ end
 
     @test QAtlas.fetch(m, Energy(), OBC(12); beta=3.0) ≈
         QAtlas.fetch(qm_direct, Energy(), OBC(12); beta=3.0) rtol = 1e-12
-    @test QAtlas.fetch(m, MassGap(), OBC(12)) ≈
-        QAtlas.fetch(qm_direct, MassGap(), OBC(12)) rtol = 1e-12
+    @test QAtlas.fetch(m, MassGap(), OBC(12)) ≈ QAtlas.fetch(qm_direct, MassGap(), OBC(12)) rtol =
+        1e-12
 end
 
 @testset "to_qatlas undefined for unsupported SiteType" begin
