@@ -1,58 +1,62 @@
+using ITensors: SiteType, @SiteType_str
+
 """
-    TFIM(; J = 1.0, h = 1.0, convention = :spin_half)
+    TFIM(; J = 1.0, h = 1.0, site = SiteType("S=1/2"))
 
-1D transverse-field Ising model.
+1D transverse-field Ising model
 
-- `:spin_half` (default): `H = -J Σ Sᶻᵢ Sᶻᵢ₊₁ - h Σ Sˣᵢ` with
-  `Sᶻ, Sˣ` the spin-1/2 operators (ITensors `"S=1/2"` site type).
-- `:pauli`: `H = -J Σ σᶻᵢ σᶻᵢ₊₁ - h Σ σˣᵢ` using Pauli matrices. In
-  ITensors land we still emit `"Sz"` / `"Sx"` but multiply by `4`/`2`
-  respectively. This convention matches `QAtlas.TFIM`.
+    H = -J Σᵢ Zᵢ Zᵢ₊₁ - h Σᵢ Xᵢ
 
-Mapping between conventions:
-`TFIM(J, h; convention=:spin_half)` and `TFIM(J/4, h/2; convention=:pauli)`
-describe the same Hamiltonian.
+where `Z`, `X` are the natural local operators of `site`:
+
+- `SiteType("S=1/2")` → `Z = Sᶻ`, `X = Sˣ` (spin-½, ITensors `"Sz"`/`"Sx"`)
+- `SiteType("Qubit")` → `Z = σᶻ`, `X = σˣ` (Pauli, ITensors `"Z"`/`"X"`)
+
+Callers choose the `SiteType` to match the physical units they want
+`J` / `h` to carry; no separate convention flag is needed. Conversion to
+QAtlas (which is Pauli-based) happens in `ext/QAtlasExt.jl` via
+`to_qatlas`, which dispatches on the site type.
 """
 Base.@kwdef struct TFIM <: AbstractLatticeModel
     J::Float64 = 1.0
     h::Float64 = 1.0
-    convention::Symbol = :spin_half
+    site::SiteType = SiteType("S=1/2")
 end
 
-site_type(::TFIM) = "S=1/2"
+site_type(m::TFIM) = m.site
 
-"""
-Resolve `(zz_coef, x_coef)` such that the emitted OpSum — which uses
-ITensors `"Sz"` / `"Sx"` (spin-1/2) operators — implements
-`-J Σ ... - h Σ ...` in the requested convention.
-"""
-function _tfim_coefs(m::TFIM)
-    if m.convention === :spin_half
-        return (-m.J, -m.h)
-    elseif m.convention === :pauli
-        # σᶻ = 2 Sᶻ ⇒ σᶻσᶻ = 4 SᶻSᶻ;  σˣ = 2 Sˣ
-        return (-4 * m.J, -2 * m.h)
-    else
-        error("TFIM: unknown convention $(m.convention). Use :spin_half or :pauli.")
-    end
-end
+# ---------------------------------------------------------------------
+# Per-site operator names (SiteType dispatch).
+# Add more SiteType methods to extend TFIM coverage.
+# ---------------------------------------------------------------------
+
+ising_z_op(::SiteType"S=1/2") = "Sz"
+ising_x_op(::SiteType"S=1/2") = "Sx"
+ising_z_op(::SiteType"Qubit") = "Z"
+ising_x_op(::SiteType"Qubit") = "X"
 
 """
     build_opsum(model::TFIM, sites; phys_sites, boundary=:bulk_half_edge) -> OpSum
 
-Emit a TFIM OpSum acting only on `phys_sites` (default: those carrying
-the `"PhysSite"` tag from ITensorSiteKit).
+Emit the TFIM Hamiltonian as an `OpSum` on `sites`, placing operators on
+the positions listed in `phys_sites`.
 
-`boundary`:
-- `:bulk_half_edge` (default): half-weight σˣ on the two bulk endpoints
-  so the σˣ count matches the ZZ bond count — matches the OBC-chunk
-  embedding used by REB.
-- `:full`: full-weight σˣ on every physical site (plain OBC chain).
+- `phys_sites` (default: positions carrying the `PhysSite` tag) is the
+  ordered list of chain positions that host a physical spin. ZZ
+  couplings are emitted between **every pair of consecutive entries in
+  `phys_sites`** regardless of chain gap — this lets a purification-style
+  `[phys, anc, phys, anc, …]` layout pass `phys_sites = 1:2:N` to couple
+  `(1,3), (3,5), …`, and a plain chain pass `phys_sites = 1:N` to couple
+  every neighbour, and an env-split chain use the default tag-based lookup.
+- `boundary = :bulk_half_edge` (default): half-weight `h/2 Σ X` on the
+  two boundary phys sites so the X count matches the ZZ bond count
+  (matches the REB Env-embedded bulk convention).
+- `boundary = :full`: full-weight `h Σ X` on every phys site.
 
-ZZ couplings are emitted only between *adjacent* physical positions
-(`phys_sites[k+1] == phys_sites[k] + 1`); non-adjacent pairs are
-skipped, which is the correct behaviour when env/aux sites split the
-bulk into disconnected chunks.
+Operator names (`Sz`/`Sx` vs `Z`/`X`) are selected by
+[`ising_z_op`](@ref) / [`ising_x_op`](@ref) dispatching on
+`model.site`. Register new `SiteType` methods there to support
+additional local Hilbert spaces.
 """
 function build_opsum(
     m::TFIM,
@@ -60,28 +64,26 @@ function build_opsum(
     phys_sites=findall(i -> hastags(i, PhysSite), sites),
     boundary::Symbol=:bulk_half_edge,
 )
-    zz_coef, x_coef = _tfim_coefs(m)
+    zop = ising_z_op(m.site)
+    xop = ising_x_op(m.site)
     phys = collect(phys_sites)
     N = length(phys)
     opsum = OpSum()
     N == 0 && return opsum
 
     for k in 1:(N - 1)
-        n, n2 = phys[k], phys[k + 1]
-        if n2 == n + 1
-            opsum += zz_coef, "Sz", n, "Sz", n2
-        end
+        opsum += -m.J, zop, phys[k], zop, phys[k + 1]
     end
 
     if boundary === :bulk_half_edge && N >= 2
-        opsum += x_coef / 2, "Sx", phys[1]
+        opsum += -m.h / 2, xop, phys[1]
         for n in phys[2:(end - 1)]
-            opsum += x_coef, "Sx", n
+            opsum += -m.h, xop, n
         end
-        opsum += x_coef / 2, "Sx", phys[end]
+        opsum += -m.h / 2, xop, phys[end]
     elseif boundary === :full || N == 1
         for n in phys
-            opsum += x_coef, "Sx", n
+            opsum += -m.h, xop, n
         end
     else
         error("TFIM build_opsum: unknown boundary $boundary")
