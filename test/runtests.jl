@@ -1,9 +1,9 @@
 ENV["GKSwstype"] = "100"
 
-using MyModule, Test
+using ITensorModels, Test
 const dirs = []
 
-const FIG_BASE = joinpath(pkgdir(MyModule), "docs", "src", "assets")
+const FIG_BASE = joinpath(pkgdir(ITensorModels), "docs", "src", "assets")
 const PATHS = Dict()
 mkpath.(values(PATHS))
 

@@ -1,7 +1,7 @@
-# MyModule.jl
+# ITensorModels.jl
 
 ## Models
 
 ```@autodocs
-Modules = [MyModule]
+Modules = [ITensorModels]
 ```
