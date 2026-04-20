@@ -1,6 +1,6 @@
 using ITensorModels: TFIM, to_qatlas, from_qatlas, thermal_energy
 using ITensors: SiteType
-import QAtlas
+using QAtlas: QAtlas
 
 @testset "to_qatlas / from_qatlas" begin
     # Qubit site → direct Pauli mapping (no rescale).

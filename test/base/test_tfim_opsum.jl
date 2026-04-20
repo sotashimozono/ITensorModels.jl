@@ -48,8 +48,7 @@ end
 
     rng = MersenneTwister(0)
     ψ = random_mps(rng, sites; linkdims=4)
-    @test (inner(ψ', H_full, ψ) - inner(ψ', H_half, ψ)) ≈
-        inner(ψ', H_diff, ψ) rtol = 1e-10
+    @test (inner(ψ', H_full, ψ) - inner(ψ', H_half, ψ)) ≈ inner(ψ', H_diff, ψ) rtol = 1e-10
 end
 
 @testset "build_opsum: env-padded chain (auto tag lookup)" begin
@@ -71,8 +70,7 @@ end
     all_sites = siteinds("S=1/2", 2 * Nph)
     phys_positions = collect(1:2:(2 * Nph))         # [1, 3, 5, 7]
     m = TFIM(; J=1.0, h=0.0)
-    opsum = build_opsum(m, all_sites;
-        phys_sites=phys_positions, boundary=:full)
+    opsum = build_opsum(m, all_sites; phys_sites=phys_positions, boundary=:full)
     # Nph-1 ZZ bonds between consecutive entries of phys_positions,
     # Nph Sx terms (boundary=:full). h = 0 → Sx coeffs vanish, so
     # only ZZ terms survive in OpSum length.
@@ -88,8 +86,7 @@ end
     sites = siteinds("Qubit", N)
     mq = TFIM(; J=1.0, h=0.5, site=SiteType("Qubit"))
     # Same H form; on |0…0⟩ we have Z=+1, so -J (N-1) (not /4).
-    opsum = build_opsum(mq, sites;
-        phys_sites=collect(1:N), boundary=:full)
+    opsum = build_opsum(mq, sites; phys_sites=collect(1:N), boundary=:full)
     H = MPO(opsum, sites)
     ψ0 = MPS(sites, "0")
     @test inner(ψ0', H, ψ0) ≈ -1.0 * (N - 1) rtol = 1e-12
