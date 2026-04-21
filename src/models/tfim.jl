@@ -24,8 +24,15 @@ end
 site_type(m::TFIM) = m.site
 
 # Per-site operator names selected by the SiteType.
+# S=1/2, S=1, S=3/2 share the ITensors spin operator names "Sz" / "Sx";
+# the actual Hilbert dimension / operator matrix is resolved later when
+# the OpSum is materialised into an MPO on specific site indices.
 ising_z_op(::SiteType"S=1/2") = "Sz"
 ising_x_op(::SiteType"S=1/2") = "Sx"
+ising_z_op(::SiteType"S=1")   = "Sz"
+ising_x_op(::SiteType"S=1")   = "Sx"
+ising_z_op(::SiteType"S=3/2") = "Sz"
+ising_x_op(::SiteType"S=3/2") = "Sx"
 ising_z_op(::SiteType"Qubit") = "Z"
 ising_x_op(::SiteType"Qubit") = "X"
 
