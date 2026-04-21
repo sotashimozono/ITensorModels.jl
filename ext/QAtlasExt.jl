@@ -35,6 +35,33 @@ function ITensorModels.from_qatlas(qm::QAtlas.TFIM)
     return ITensorModels.TFIM(; J=qm.J, h=qm.h, site=SiteType("Qubit"))
 end
 
+# --- XXZ1D --------------------------------------------------------------
+
+ITensorModels.to_qatlas(m::ITensorModels.XXZ1D) = ITensorModels.to_qatlas(m, m.site)
+
+# QAtlas XXZ1D uses spin-½ convention, so the coefficients pass through.
+function ITensorModels.to_qatlas(m::ITensorModels.XXZ1D, ::SiteType"S=1/2")
+    return QAtlas.XXZ1D(m.J, m.Δ)
+end
+
+function ITensorModels.from_qatlas(qm::QAtlas.XXZ1D)
+    return ITensorModels.XXZ1D(; J=qm.J, Δ=qm.Δ)
+end
+
+# --- Heisenberg1D -------------------------------------------------------
+
+# QAtlas.Heisenberg1D is parameter-free (J = 1 fixed). Map either way
+# only when the ITensorModels side is on a S=1/2 site with J = 1.
+ITensorModels.to_qatlas(m::ITensorModels.Heisenberg1D) = ITensorModels.to_qatlas(m, m.site)
+
+function ITensorModels.to_qatlas(m::ITensorModels.Heisenberg1D, ::SiteType"S=1/2")
+    return QAtlas.Heisenberg1D()
+end
+
+function ITensorModels.from_qatlas(::QAtlas.Heisenberg1D)
+    return ITensorModels.Heisenberg1D()
+end
+
 # --- fetch forwarder ----------------------------------------------------
 #
 # Route `QAtlas.fetch` calls that take an ITensorModels model through
