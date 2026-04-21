@@ -29,8 +29,8 @@ site_type(m::TFIM) = m.site
 # the OpSum is materialised into an MPO on specific site indices.
 ising_z_op(::SiteType"S=1/2") = "Sz"
 ising_x_op(::SiteType"S=1/2") = "Sx"
-ising_z_op(::SiteType"S=1")   = "Sz"
-ising_x_op(::SiteType"S=1")   = "Sx"
+ising_z_op(::SiteType"S=1") = "Sz"
+ising_x_op(::SiteType"S=1") = "Sx"
 ising_z_op(::SiteType"S=3/2") = "Sz"
 ising_x_op(::SiteType"S=3/2") = "Sx"
 ising_z_op(::SiteType"Qubit") = "Z"

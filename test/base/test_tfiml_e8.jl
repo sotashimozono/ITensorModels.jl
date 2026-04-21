@@ -22,46 +22,44 @@ using Random
 if get(ENV, "ITENSORMODELS_SLOW_TESTS", "false") != "true"
     @info "Skipping TFIML E8 dmrg_x probe (set ITENSORMODELS_SLOW_TESTS=true to enable)"
 else
+    @testset "TFIML E8 low-energy gap probe via dmrg_x" begin
+        N = 16
+        m = TFIML(; J=1.0, h_x=1.0, h_z=0.05, site=SiteType("S=1/2"))
+        sites = siteinds("S=1/2", N)
+        H = MPO(build_opsum(m, sites; phys_sites=1:N, boundary=:full), sites)
 
-@testset "TFIML E8 low-energy gap probe via dmrg_x" begin
-    N = 16
-    m = TFIML(; J=1.0, h_x=1.0, h_z=0.05, site=SiteType("S=1/2"))
-    sites = siteinds("S=1/2", N)
-    H = MPO(build_opsum(m, sites; phys_sites=1:N, boundary=:full), sites)
+        rng = MersenneTwister(42)
+        ψ0_init = random_mps(rng, sites; linkdims=16)
+        sweeps = Sweeps(20)
+        maxdim!(sweeps, 10, 20, 40, 60)
+        cutoff!(sweeps, 1e-12)
+        E0, _ = dmrg(H, ψ0_init, sweeps; outputlevel=0)
 
-    rng = MersenneTwister(42)
-    ψ0_init = random_mps(rng, sites; linkdims=16)
-    sweeps = Sweeps(20)
-    maxdim!(sweeps, 10, 20, 40, 60)
-    cutoff!(sweeps, 1e-12)
-    E0, _ = dmrg(H, ψ0_init, sweeps; outputlevel=0)
+        mid = N ÷ 2
+        state_up = fill("Up", N)
+        flip1 = copy(state_up);
+        flip1[mid] = "Dn"
+        flip2 = copy(state_up);
+        flip2[mid] = "Dn";
+        flip2[mid + 1] = "Dn"
 
-    mid = N ÷ 2
-    state_up = fill("Up", N)
-    flip1 = copy(state_up);
-    flip1[mid] = "Dn"
-    flip2 = copy(state_up);
-    flip2[mid] = "Dn";
-    flip2[mid + 1] = "Dn"
+        dmrgx_kw = (; nsweeps=20, maxdim=60, cutoff=1e-10, normalize=true, outputlevel=0)
+        E1, _ = dmrg_x(H, MPS(sites, flip1); nsite=2, dmrgx_kw...)
+        E2, _ = dmrg_x(H, MPS(sites, flip2); nsite=2, dmrgx_kw...)
 
-    dmrgx_kw = (; nsweeps=20, maxdim=60, cutoff=1e-10, normalize=true, outputlevel=0)
-    E1, _ = dmrg_x(H, MPS(sites, flip1); nsite=2, dmrgx_kw...)
-    E2, _ = dmrg_x(H, MPS(sites, flip2); nsite=2, dmrgx_kw...)
+        Δ1 = E1 - E0
+        Δ2 = E2 - E0
+        ratio = Δ2 / Δ1
+        φ = (1 + sqrt(5)) / 2
+        @info "TFIML E8 probe (dmrg_x)" E0 E1 E2 Δ1 Δ2 ratio φ
 
-    Δ1 = E1 - E0
-    Δ2 = E2 - E0
-    ratio = Δ2 / Δ1
-    φ = (1 + sqrt(5)) / 2
-    @info "TFIML E8 probe (dmrg_x)" E0 E1 E2 Δ1 Δ2 ratio φ
-
-    # Sanity: both gaps strictly positive.
-    @test Δ1 > 0
-    @test Δ2 > 0
-    # Aspirational: dmrg_x-sampled gap ratio matches the E8 golden-ratio
-    # prediction. Broken because dmrg_x targets product-state-overlap
-    # eigenstates; the critical TFIML low-lying modes are not
-    # product-like. Re-enable once excited-state DMRG is added.
-    @test_broken ratio ≈ φ rtol = 0.1
-end
-
+        # Sanity: both gaps strictly positive.
+        @test Δ1 > 0
+        @test Δ2 > 0
+        # Aspirational: dmrg_x-sampled gap ratio matches the E8 golden-ratio
+        # prediction. Broken because dmrg_x targets product-state-overlap
+        # eigenstates; the critical TFIML low-lying modes are not
+        # product-like. Re-enable once excited-state DMRG is added.
+        @test_broken ratio ≈ φ rtol = 0.1
+    end
 end  # slow-tests guard
