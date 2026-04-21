@@ -34,14 +34,16 @@ struct LatticeModel{L,D} <: AbstractLatticeModel
     bond_models::D
     ordering::Vector{Int}
 
-    function LatticeModel(lattice::L, bond_models::D;
-        ordering::Vector{Int}=Int[]) where {L,D}
+    function LatticeModel(
+        lattice::L, bond_models::D; ordering::Vector{Int}=Int[]
+    ) where {L,D}
         return new{L,D}(lattice, bond_models, ordering)
     end
 end
 
-LatticeModel(; lattice, bond_models, ordering::Vector{Int}=Int[]) =
+function LatticeModel(; lattice, bond_models, ordering::Vector{Int}=Int[])
     LatticeModel(lattice, bond_models; ordering)
+end
 
 function site_type(m::LatticeModel)
     sts = unique(site_type(bm) for bm in values(m.bond_models))

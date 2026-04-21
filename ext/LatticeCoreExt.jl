@@ -2,8 +2,8 @@ module LatticeCoreExt
 
 using ITensors: OpSum, hastags
 using ITensorModels
-using ITensorModels: AbstractLatticeModel, LatticeModel, bond_term,
-    local_ham_terms, boundary_patch
+using ITensorModels:
+    AbstractLatticeModel, LatticeModel, bond_term, local_ham_terms, boundary_patch
 using ITensorSiteKit: PhysSite
 using LatticeCore: AbstractLattice, bonds, num_sites
 
@@ -58,8 +58,7 @@ host physical DOF via its bond connectivity. `boundary` is accepted
 for interface compatibility but currently must be `:full`.
 """
 function ITensorModels.local_ham_terms(
-    m::LatticeModel{<:AbstractLattice}, phys_sites;
-    boundary::Symbol=:full,
+    m::LatticeModel{<:AbstractLattice}, phys_sites; boundary::Symbol=:full
 )
     boundary === :full || error(
         "LatticeModel currently supports only boundary = :full " *
@@ -84,8 +83,7 @@ Compose the full `OpSum` by summing every bond term produced by
 provides connectivity).
 """
 function ITensorModels.build_opsum(
-    m::LatticeModel{<:AbstractLattice}, sites;
-    phys_sites=nothing, boundary::Symbol=:full,
+    m::LatticeModel{<:AbstractLattice}, sites; phys_sites=nothing, boundary::Symbol=:full
 )
     opsum = OpSum()
     for t in ITensorModels.local_ham_terms(m, phys_sites; boundary)

@@ -13,10 +13,16 @@ struct _LineChain <: LatticeCore.AbstractLattice{1,Float64}
     N::Int
 end
 LatticeCore.num_sites(l::_LineChain) = l.N
-LatticeCore.position(l::_LineChain, i::Int) =
-    LatticeCore.StaticArrays.SVector(Float64(i))
-LatticeCore.neighbors(l::_LineChain, i::Int) =
-    i == 1 ? [2] : i == l.N ? [l.N - 1] : [i - 1, i + 1]
+LatticeCore.position(l::_LineChain, i::Int) = LatticeCore.StaticArrays.SVector(Float64(i))
+function LatticeCore.neighbors(l::_LineChain, i::Int)
+    if i == 1
+        [2]
+    elseif i == l.N
+        [l.N - 1]
+    else
+        [i - 1, i + 1]
+    end
+end
 LatticeCore.boundary(::_LineChain) = LatticeCore.OpenAxis()
 LatticeCore.size_trait(::_LineChain) = LatticeCore.FiniteSize()
 # Default `bonds(lat)` builds Bond{D,T} objects from `neighbors`.
@@ -26,8 +32,9 @@ LatticeCore.size_trait(::_LineChain) = LatticeCore.FiniteSize()
     lat = _LineChain(N)
 
     # Heisenberg on every nearest-neighbour bond.
-    model_lat = LatticeModel(; lattice=lat,
-        bond_models=Dict(:nearest => Heisenberg1D(; J=1.0)))
+    model_lat = LatticeModel(;
+        lattice=lat, bond_models=Dict(:nearest => Heisenberg1D(; J=1.0))
+    )
 
     sites = siteinds("S=1/2", N)
     H_lat = MPO(build_opsum(model_lat, sites), sites)
@@ -54,9 +61,7 @@ end
     # Reverse ordering — lattice site k ↔ MPS position N+1-k.
     rev = collect(N:-1:1)
     model = LatticeModel(;
-        lattice=lat,
-        bond_models=Dict(:nearest => Heisenberg1D(; J=1.0)),
-        ordering=rev,
+        lattice=lat, bond_models=Dict(:nearest => Heisenberg1D(; J=1.0)), ordering=rev
     )
     sites = siteinds("S=1/2", N)
     opsum = build_opsum(model, sites)
@@ -76,10 +81,7 @@ end
 @testset "LatticeModel: bond_models dict dispatches on bond.type" begin
     # Mixed coupling model: bond model dict keyed by :nearest fallback.
     lat = _LineChain(4)
-    model = LatticeModel(;
-        lattice=lat,
-        bond_models=Dict(:nearest => Heisenberg1D(; J=0.3)),
-    )
+    model = LatticeModel(; lattice=lat, bond_models=Dict(:nearest => Heisenberg1D(; J=0.3)))
     sites = siteinds("S=1/2", 4)
     opsum = build_opsum(model, sites)
     # The Heisenberg OpSum on each bond has 3 terms (S+S-, S-S+, SzSz);
