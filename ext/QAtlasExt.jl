@@ -52,8 +52,7 @@ end
 
 # QAtlas.Heisenberg1D is parameter-free (J = 1 fixed). Map either way
 # only when the ITensorModels side is on a S=1/2 site with J = 1.
-ITensorModels.to_qatlas(m::ITensorModels.Heisenberg1D) =
-    ITensorModels.to_qatlas(m, m.site)
+ITensorModels.to_qatlas(m::ITensorModels.Heisenberg1D) = ITensorModels.to_qatlas(m, m.site)
 
 function ITensorModels.to_qatlas(m::ITensorModels.Heisenberg1D, ::SiteType"S=1/2")
     return QAtlas.Heisenberg1D()

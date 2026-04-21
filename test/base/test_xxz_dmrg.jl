@@ -1,6 +1,6 @@
 using ITensorModels: XXZ1D, Heisenberg1D, build_opsum
 using ITensors, ITensorMPS
-import QAtlas
+using QAtlas: QAtlas
 using QAtlas: Energy, GroundStateEnergyDensity, Infinite, OBC
 using Random
 

@@ -15,5 +15,6 @@ end
 
 site_type(m::Heisenberg1D) = m.site
 
-bond_term(m::Heisenberg1D, i::Int, j::Int) =
+function bond_term(m::Heisenberg1D, i::Int, j::Int)
     bond_term(XXZ1D(; J=m.J, Δ=1.0, site=m.site), i, j)
+end

@@ -1,6 +1,6 @@
 using ITensorModels
-using ITensorModels: TFIM, build_opsum, bond_term, boundary_patch,
-    local_ham_terms, site_type
+using ITensorModels:
+    TFIM, build_opsum, bond_term, boundary_patch, local_ham_terms, site_type
 using ITensors, ITensorMPS
 using ITensors: SiteType
 using ITensorSiteKit: PhysInds, EnvInds, PhysSite
@@ -50,8 +50,7 @@ end
 
     rng = MersenneTwister(0)
     ψ = random_mps(rng, sites; linkdims=4)
-    @test (inner(ψ', H_full, ψ) - inner(ψ', H_half, ψ)) ≈
-        inner(ψ', H_diff, ψ) rtol = 1e-10
+    @test (inner(ψ', H_full, ψ) - inner(ψ', H_half, ψ)) ≈ inner(ψ', H_diff, ψ) rtol = 1e-10
 end
 
 @testset "local_ham_terms sums to build_opsum (bond decomposition)" begin
@@ -94,8 +93,7 @@ end
     all_sites = siteinds("S=1/2", 2 * Nph)
     phys_positions = collect(1:2:(2 * Nph))
     m = TFIM(; J=1.0, h=0.0)
-    opsum = build_opsum(m, all_sites;
-        phys_sites=phys_positions, boundary=:full)
+    opsum = build_opsum(m, all_sites; phys_sites=phys_positions, boundary=:full)
     H = MPO(opsum, all_sites)
     ψup = MPS(all_sites, "Up")
     @test inner(ψup', H, ψup) ≈ -m.J * (Nph - 1) / 4 rtol = 1e-12
