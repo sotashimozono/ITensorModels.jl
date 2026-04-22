@@ -12,8 +12,9 @@ ITensors = "9136182c-28ba-11e9-034c-db9fb085ebd5"
 LatticeCore = "84b1cbd8-bc58-4618-bc4f-b46a399f49f1"
 QAtlas = "2bd488d2-d3e6-46ee-afb3-5515643db0c7"
 
-[sources]
-ITensorSiteKit = {rev = "v0.1.0", url = "https://github.com/sotashimozono/ITensorSiteKit.jl"}
+[sources.ITensorSiteKit]
+rev = "v0.1.0"
+url = "https://github.com/sotashimozono/ITensorSiteKit.jl"
 
 [extensions]
 LatticeCoreExt = "LatticeCore"
@@ -24,7 +25,7 @@ ITensorMPS = "0.3"
 ITensorSiteKit = "0.1"
 ITensors = "0.9"
 LatticeCore = "0.8"
-QAtlas = "0.13"
+QAtlas = "0.13, 0.14"
 julia = "1.10"
 
 [extras]
