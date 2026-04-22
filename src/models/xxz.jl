@@ -38,3 +38,11 @@ function bond_term(m::XXZ1D, i::Int, j::Int)
 end
 
 # XXZ1D has no on-site terms → no boundary patch needed.
+
+function onsite_observable_op(m::XXZ1D, name::Symbol)
+    xop, yop, zop, _ = _xxz_ops(m.site)
+    name === :sx && return xop
+    name === :sy && return yop
+    name === :sz && return zop
+    error("XXZ1D: unsupported onsite observable $name on site $(site_type(m))")
+end

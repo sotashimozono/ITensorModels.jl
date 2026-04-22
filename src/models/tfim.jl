@@ -36,6 +36,25 @@ ising_x_op(::SiteType"S=3/2") = "Sx"
 ising_z_op(::SiteType"Qubit") = "Z"
 ising_x_op(::SiteType"Qubit") = "X"
 
+function onsite_observable_op(m::TFIM, name::Symbol)
+    # TFIM's symmetry-relevant onsite observables are Sˣ (order parameter
+    # of the disordered/paramagnetic regime) and Sᶻ (of the broken-symmetry
+    # regime). Sʸ is not conventionally used for TFIM but available for
+    # completeness on S=1/2.
+    s = site_type(m)
+    name === :sx && return ising_x_op(s)
+    name === :sz && return ising_z_op(s)
+    if name === :sy
+        return _tfim_y_op(s)
+    end
+    error("TFIM: unsupported onsite observable $name on site $s")
+end
+
+_tfim_y_op(::SiteType"S=1/2") = "Sy"
+_tfim_y_op(::SiteType"S=1") = "Sy"
+_tfim_y_op(::SiteType"S=3/2") = "Sy"
+_tfim_y_op(::SiteType"Qubit") = "Y"
+
 function bond_term(m::TFIM, i::Int, j::Int)
     zop = ising_z_op(m.site)
     xop = ising_x_op(m.site)

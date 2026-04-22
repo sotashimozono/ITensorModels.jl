@@ -6,6 +6,7 @@ using ITensorSiteKit: PhysSite
 
 export AbstractLatticeModel, site_type
 export bond_term, boundary_patch, local_ham_terms, build_opsum
+export onsite_observable_op, build_onsite_observable_opsum
 export TFIM, TFIML, XXZ1D, Heisenberg1D, KitaevBond, LatticeModel
 export to_qatlas, from_qatlas
 
@@ -43,6 +44,7 @@ Inverse of [`to_qatlas`](@ref). Implemented in `ext/QAtlasExt.jl`.
 function from_qatlas end
 
 include("core/interface.jl")
+include("core/observables.jl")
 
 include("models/tfim.jl")
 include("models/tfiml.jl")

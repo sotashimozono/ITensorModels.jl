@@ -21,6 +21,8 @@ end
 
 site_type(m::TFIML) = m.site
 
+onsite_observable_op(m::TFIML, name::Symbol) = onsite_observable_op(TFIM(; site=m.site), name)
+
 function bond_term(m::TFIML, i::Int, j::Int)
     zop = ising_z_op(m.site)
     xop = ising_x_op(m.site)
