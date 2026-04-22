@@ -2,26 +2,28 @@ using ITensorModels: KitaevBond, LatticeModel, build_opsum, local_ham_terms
 using ITensors, ITensorMPS
 using ITensors: SiteType
 using LatticeCore: num_sites, bonds
-using Lattice2D: Honeycomb, build_lattice
+using Lattice2D: Honeycomb as L2DHoneycomb, build_lattice
 using Lattice2D: PeriodicAxis, OpenAxis, LatticeBoundary, UniformLayout, IsingSite
+using QAtlas: QAtlas, Energy, OBC
+using Random: MersenneTwister
 
-# Smoke test: does LatticeModel + KitaevBond produce a sensible
-# Hamiltonian on Lattice2D's Honeycomb? We check the three-axis Kitaev
-# Hamiltonian has the expected bond count and yields a negative ground
-# state energy via DMRG at the isotropic point K_x = K_y = K_z = 1.
+# End-to-end integration: LatticeModel + KitaevBond + Lattice2D.Honeycomb
+# constructs the Kitaev honeycomb Hamiltonian; ITensorMPS DMRG then
+# yields a variational ground state that must converge to the exact
+# value supplied by QAtlas.KitaevHoneycomb (whose OBC branch is
+# validated against ED in the QAtlas test suite). Passing this means
+# the LatticeCoreExt bond iteration + KitaevBond axis-dispatch are
+# physically correct.
 
 function _make_kitaev_honeycomb(Lx::Int, Ly::Int; K=1.0)
-    lat = build_lattice(
-        Honeycomb, Lx, Ly; boundary=OpenAxis(), layout=UniformLayout(IsingSite())
-    )
-    model = LatticeModel(;
-        lattice=lat,
+    lat = build_lattice(L2DHoneycomb, Lx, Ly;
+        boundary=OpenAxis(), layout=UniformLayout(IsingSite()))
+    model = LatticeModel(; lattice=lat,
         bond_models=Dict(
             :type_1 => KitaevBond(; K=K, axis=:z, site=SiteType("Qubit")),
             :type_2 => KitaevBond(; K=K, axis=:x, site=SiteType("Qubit")),
             :type_3 => KitaevBond(; K=K, axis=:y, site=SiteType("Qubit")),
-        ),
-    )
+        ))
     return lat, model
 end
 
@@ -35,26 +37,67 @@ end
     @test n_term > 0
 end
 
-@testset "KitaevHoneycomb isotropic DMRG ground energy is negative" begin
-    # Tiny Honeycomb for CI — 2×2 cells = 8 sites.
+@testset "Kitaev honeycomb DMRG matches QAtlas.KitaevHoneycomb OBC (isotropic)" begin
+    # DMRG on the 8-site 2×2 OBC cluster. QAtlas's `fetch(KitaevHoneycomb,
+    # Energy(), OBC; Lx, Ly)` returns per-site GS energy from the
+    # flux-free-sector SVD — verified against dense ED in the QAtlas
+    # test suite. At Lx = Ly = 2 the reference is ε₀ ≈ -0.5832336.
     Lx, Ly = 2, 2
     lat, model = _make_kitaev_honeycomb(Lx, Ly; K=1.0)
     N = num_sites(lat)
-
     sites = siteinds("Qubit", N)
     H = MPO(build_opsum(model, sites), sites)
 
-    ψ0 = random_mps(sites; linkdims=8)
-    sweeps = Sweeps(12)
-    maxdim!(sweeps, 10, 20, 40, 60)
-    cutoff!(sweeps, 1e-10)
-    E, _ = dmrg(H, ψ0, sweeps; outputlevel=0)
+    rng = MersenneTwister(42)
+    ψ0 = random_mps(rng, sites; linkdims=16)
+    sweeps = Sweeps(20)
+    maxdim!(sweeps, 10, 20, 40, 80, 120)
+    cutoff!(sweeps, 1e-12)
+    E_dmrg, _ = dmrg(H, ψ0, sweeps; outputlevel=0)
 
-    @info "Kitaev honeycomb DMRG" Lx Ly N K = 1.0 E E_per_site = E / N
-    # Isotropic Kitaev gs energy per site in the TL is roughly -0.39 (in
-    # units where K = 1). Small OBC systems deviate, but per-site energy
-    # should clearly be in the range (-0.6, -0.1) — i.e. negative and
-    # finite.
-    @test E / N < -0.1
-    @test E / N > -0.6
+    m_qatlas = QAtlas.KitaevHoneycomb(; Kx=1.0, Ky=1.0, Kz=1.0)
+    ε_ref = QAtlas.fetch(m_qatlas, Energy(), OBC(0); Lx=Lx, Ly=Ly)
+    E_ref = ε_ref * N   # per-site → total
+
+    @info "Kitaev DMRG vs QAtlas (Lx=Ly=2 OBC isotropic)" N E_dmrg E_ref ε_dmrg =
+        E_dmrg / N ε_ref rel_err = abs(E_dmrg - E_ref) / abs(E_ref)
+    @test E_dmrg ≈ E_ref rtol = 1e-4
+end
+
+@testset "Kitaev honeycomb DMRG matches QAtlas anisotropic OBC" begin
+    # Anisotropic points — check the KitaevBond axis dispatch is wired
+    # to the right σˣ / σʸ / σᶻ pauli ops. Ax-phase pushes Kx dominant.
+    Lx, Ly = 2, 2
+    cases = [
+        (1.0, 1.0, 1.0),     # B-phase (isotropic, covered above but
+        #                                include as sanity)
+        (0.3, 0.7, 1.0),     # generic anisotropic
+        (2.0, 0.5, 0.5),     # Ax-phase (gapped)
+    ]
+    for (Kx, Ky, Kz) in cases
+        lat = build_lattice(L2DHoneycomb, Lx, Ly;
+            boundary=OpenAxis(), layout=UniformLayout(IsingSite()))
+        model = LatticeModel(; lattice=lat,
+            bond_models=Dict(
+                :type_1 => KitaevBond(; K=Kz, axis=:z, site=SiteType("Qubit")),
+                :type_2 => KitaevBond(; K=Kx, axis=:x, site=SiteType("Qubit")),
+                :type_3 => KitaevBond(; K=Ky, axis=:y, site=SiteType("Qubit")),
+            ))
+        N = num_sites(lat)
+        sites = siteinds("Qubit", N)
+        H = MPO(build_opsum(model, sites), sites)
+
+        rng = MersenneTwister(hash((Kx, Ky, Kz)) & 0xffff)
+        ψ0 = random_mps(rng, sites; linkdims=16)
+        sweeps = Sweeps(25)
+        maxdim!(sweeps, 10, 20, 40, 80, 120)
+        cutoff!(sweeps, 1e-12)
+        E_dmrg, _ = dmrg(H, ψ0, sweeps; outputlevel=0)
+
+        m_qatlas = QAtlas.KitaevHoneycomb(; Kx=Kx, Ky=Ky, Kz=Kz)
+        E_ref = QAtlas.fetch(m_qatlas, Energy(), OBC(0); Lx=Lx, Ly=Ly) * N
+        @info "Kitaev DMRG vs QAtlas (anisotropic)" Kx Ky Kz E_dmrg E_ref rel_err =
+            abs(E_dmrg - E_ref) / abs(E_ref)
+        @test E_dmrg ≈ E_ref rtol = 1e-3
+    end
 end
