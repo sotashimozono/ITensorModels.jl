@@ -1,6 +1,6 @@
 name = "ITensorModels"
 uuid = "ef2189cb-6e0f-43f0-8f34-d6f851ec88d5"
-version = "0.5.0"
+version = "0.5.1"
 authors = ["sota shimozono <shimozono-sota631@g.ecc.u-tokyo.ac.jp>"]
 
 [deps]
@@ -25,7 +25,7 @@ ITensorMPS = "0.3"
 ITensorSiteKit = "0.1"
 ITensors = "0.9"
 LatticeCore = "0.8"
-QAtlas = "0.13, 0.14"
+QAtlas = "0.13, 0.14, 0.15"
 julia = "1.10"
 
 [extras]
