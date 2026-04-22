@@ -3,8 +3,7 @@ using ITensors, ITensorMPS
 using ITensors: SiteType
 using LatticeCore: num_sites, bonds
 using Lattice2D: Honeycomb, build_lattice
-using Lattice2D: PeriodicAxis, OpenAxis, LatticeBoundary, UniformLayout,
-    IsingSite
+using Lattice2D: PeriodicAxis, OpenAxis, LatticeBoundary, UniformLayout, IsingSite
 
 # Smoke test: does LatticeModel + KitaevBond produce a sensible
 # Hamiltonian on Lattice2D's Honeycomb? We check the three-axis Kitaev
@@ -12,16 +11,17 @@ using Lattice2D: PeriodicAxis, OpenAxis, LatticeBoundary, UniformLayout,
 # state energy via DMRG at the isotropic point K_x = K_y = K_z = 1.
 
 function _make_kitaev_honeycomb(Lx::Int, Ly::Int; K=1.0)
-    lat = build_lattice(Honeycomb, Lx, Ly;
-        boundary=OpenAxis(),
-        layout=UniformLayout(IsingSite()))
+    lat = build_lattice(
+        Honeycomb, Lx, Ly; boundary=OpenAxis(), layout=UniformLayout(IsingSite())
+    )
     model = LatticeModel(;
         lattice=lat,
         bond_models=Dict(
             :type_1 => KitaevBond(; K=K, axis=:z, site=SiteType("Qubit")),
             :type_2 => KitaevBond(; K=K, axis=:x, site=SiteType("Qubit")),
             :type_3 => KitaevBond(; K=K, axis=:y, site=SiteType("Qubit")),
-        ))
+        ),
+    )
     return lat, model
 end
 

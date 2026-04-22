@@ -46,9 +46,9 @@ site_type(m::KitaevBond) = m.site
 kitaev_op(::SiteType"S=1/2", ::Val{:x}) = "Sx"
 kitaev_op(::SiteType"S=1/2", ::Val{:y}) = "Sy"
 kitaev_op(::SiteType"S=1/2", ::Val{:z}) = "Sz"
-kitaev_op(::SiteType"S=1",   ::Val{:x}) = "Sx"
-kitaev_op(::SiteType"S=1",   ::Val{:y}) = "Sy"
-kitaev_op(::SiteType"S=1",   ::Val{:z}) = "Sz"
+kitaev_op(::SiteType"S=1", ::Val{:x}) = "Sx"
+kitaev_op(::SiteType"S=1", ::Val{:y}) = "Sy"
+kitaev_op(::SiteType"S=1", ::Val{:z}) = "Sz"
 kitaev_op(::SiteType"S=3/2", ::Val{:x}) = "Sx"
 kitaev_op(::SiteType"S=3/2", ::Val{:y}) = "Sy"
 kitaev_op(::SiteType"S=3/2", ::Val{:z}) = "Sz"
@@ -64,8 +64,7 @@ Look up the ITensors operator name for the given Kitaev `axis`
 combinations so that dispatch misses are loud rather than silent.
 """
 function _kitaev_op(site::SiteType, axis::Symbol)
-    axis ∈ (:x, :y, :z) ||
-        error("KitaevBond: unknown axis $axis (expected :x, :y, :z).")
+    axis ∈ (:x, :y, :z) || error("KitaevBond: unknown axis $axis (expected :x, :y, :z).")
     return kitaev_op(site, Val(axis))
 end
 
