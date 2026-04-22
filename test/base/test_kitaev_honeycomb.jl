@@ -16,14 +16,17 @@ using Random: MersenneTwister
 # physically correct.
 
 function _make_kitaev_honeycomb(Lx::Int, Ly::Int; K=1.0)
-    lat = build_lattice(L2DHoneycomb, Lx, Ly;
-        boundary=OpenAxis(), layout=UniformLayout(IsingSite()))
-    model = LatticeModel(; lattice=lat,
+    lat = build_lattice(
+        L2DHoneycomb, Lx, Ly; boundary=OpenAxis(), layout=UniformLayout(IsingSite())
+    )
+    model = LatticeModel(;
+        lattice=lat,
         bond_models=Dict(
             :type_1 => KitaevBond(; K=K, axis=:z, site=SiteType("Qubit")),
             :type_2 => KitaevBond(; K=K, axis=:x, site=SiteType("Qubit")),
             :type_3 => KitaevBond(; K=K, axis=:y, site=SiteType("Qubit")),
-        ))
+        ),
+    )
     return lat, model
 end
 
@@ -59,8 +62,8 @@ end
     ε_ref = QAtlas.fetch(m_qatlas, Energy(), OBC(0); Lx=Lx, Ly=Ly)
     E_ref = ε_ref * N   # per-site → total
 
-    @info "Kitaev DMRG vs QAtlas (Lx=Ly=2 OBC isotropic)" N E_dmrg E_ref ε_dmrg =
-        E_dmrg / N ε_ref rel_err = abs(E_dmrg - E_ref) / abs(E_ref)
+    @info "Kitaev DMRG vs QAtlas (Lx=Ly=2 OBC isotropic)" N E_dmrg E_ref ε_dmrg = E_dmrg / N ε_ref rel_err =
+        abs(E_dmrg - E_ref) / abs(E_ref)
     @test E_dmrg ≈ E_ref rtol = 1e-4
 end
 
@@ -75,14 +78,17 @@ end
         (2.0, 0.5, 0.5),     # Ax-phase (gapped)
     ]
     for (Kx, Ky, Kz) in cases
-        lat = build_lattice(L2DHoneycomb, Lx, Ly;
-            boundary=OpenAxis(), layout=UniformLayout(IsingSite()))
-        model = LatticeModel(; lattice=lat,
+        lat = build_lattice(
+            L2DHoneycomb, Lx, Ly; boundary=OpenAxis(), layout=UniformLayout(IsingSite())
+        )
+        model = LatticeModel(;
+            lattice=lat,
             bond_models=Dict(
                 :type_1 => KitaevBond(; K=Kz, axis=:z, site=SiteType("Qubit")),
                 :type_2 => KitaevBond(; K=Kx, axis=:x, site=SiteType("Qubit")),
                 :type_3 => KitaevBond(; K=Ky, axis=:y, site=SiteType("Qubit")),
-            ))
+            ),
+        )
         N = num_sites(lat)
         sites = siteinds("Qubit", N)
         H = MPO(build_opsum(model, sites), sites)
