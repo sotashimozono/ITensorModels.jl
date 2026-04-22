@@ -28,10 +28,11 @@ QAtlas = "0.13"
 julia = "1.10"
 
 [extras]
+Lattice2D = "e8031020-b7ff-4f1d-bee4-f79aea4cf140"
 LatticeCore = "84b1cbd8-bc58-4618-bc4f-b46a399f49f1"
 QAtlas = "2bd488d2-d3e6-46ee-afb3-5515643db0c7"
 Random = "9a3f8284-a2c9-5f02-9a11-845980a1fd5c"
 Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
 
 [targets]
-test = ["LatticeCore", "QAtlas", "Random", "Test"]
+test = ["Lattice2D", "LatticeCore", "QAtlas", "Random", "Test"]
