@@ -12,11 +12,9 @@ ITensors = "9136182c-28ba-11e9-034c-db9fb085ebd5"
 LatticeCore = "84b1cbd8-bc58-4618-bc4f-b46a399f49f1"
 QAtlas = "2bd488d2-d3e6-46ee-afb3-5515643db0c7"
 
-[sources]
-ITensorSiteKit = {rev = "v0.1.0", url = "https://github.com/sotashimozono/ITensorSiteKit.jl"}
-# QAtlas v0.14.x is not yet in the General registry; point at the
-# pinned v0.14.0 tag until it lands. Safe to remove once General has it.
-QAtlas = {rev = "v0.14.0", url = "https://github.com/sotashimozono/QAtlas.jl"}
+[sources.ITensorSiteKit]
+rev = "v0.1.0"
+url = "https://github.com/sotashimozono/ITensorSiteKit.jl"
 
 [extensions]
 LatticeCoreExt = "LatticeCore"
