@@ -41,8 +41,11 @@ function build_onsite_observable_opsum(
     phys_sites=findall(i -> hastags(i, PhysSite), sites),
     weights=ones(length(phys_sites)),
 )
-    length(weights) == length(phys_sites) ||
-        throw(ArgumentError("weights length $(length(weights)) ≠ phys_sites length $(length(phys_sites))"))
+    length(weights) == length(phys_sites) || throw(
+        ArgumentError(
+            "weights length $(length(weights)) ≠ phys_sites length $(length(phys_sites))",
+        ),
+    )
     op = onsite_observable_op(m, name)
     opsum = OpSum()
     for (k, i) in enumerate(phys_sites)

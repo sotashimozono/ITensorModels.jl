@@ -19,5 +19,6 @@ function bond_term(m::Heisenberg1D, i::Int, j::Int)
     bond_term(XXZ1D(; J=m.J, Δ=1.0, site=m.site), i, j)
 end
 
-onsite_observable_op(m::Heisenberg1D, name::Symbol) =
+function onsite_observable_op(m::Heisenberg1D, name::Symbol)
     onsite_observable_op(XXZ1D(; J=m.J, Δ=1.0, site=m.site), name)
+end
