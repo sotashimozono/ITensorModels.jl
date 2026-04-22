@@ -6,7 +6,7 @@ using ITensorSiteKit: PhysSite
 
 export AbstractLatticeModel, site_type
 export bond_term, boundary_patch, local_ham_terms, build_opsum
-export TFIM, TFIML, XXZ1D, Heisenberg1D
+export TFIM, TFIML, XXZ1D, Heisenberg1D, LatticeModel
 export to_qatlas, from_qatlas
 
 """
@@ -48,5 +48,6 @@ include("models/tfim.jl")
 include("models/tfiml.jl")
 include("models/xxz.jl")
 include("models/heisenberg.jl")
+include("models/lattice_model.jl")
 
 end # module ITensorModels
