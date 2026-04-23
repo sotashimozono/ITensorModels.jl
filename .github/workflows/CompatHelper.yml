@@ -1,7 +1,7 @@
 name: CompatHelper
 on:
   schedule:
-    - cron: '0 0 * * *' # 毎日0時にチェック
+    - cron: '0 0 * * *'  # daily midnight UTC
   workflow_dispatch:
 
 permissions:
@@ -12,15 +12,14 @@ jobs:
   CompatHelper:
     runs-on: ubuntu-latest
     steps:
-      - name: Check if Julia is already installed in the environment
-        if: steps.julia.outcome == 'skipped'
-        uses: julia-actions/setup-julia@v3
+      - uses: actions/checkout@v4
+      - uses: julia-actions/setup-julia@v3
         with:
           version: '1'
-      - name: Pkg.add("CompatHelper")
+      - uses: julia-actions/cache@v2
+      - name: Install CompatHelper
         run: julia -e 'using Pkg; Pkg.add("CompatHelper")'
-      - name: CompatHelper.main()
+      - name: Run CompatHelper
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          COMPATHELPER_PRIV: ${{ secrets.DOCUMENTER_KEY }}
         run: julia -e 'using CompatHelper; CompatHelper.main()'
