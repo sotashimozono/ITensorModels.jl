@@ -21,7 +21,7 @@ LatticeCoreExt = "LatticeCore"
 QAtlasExt = "QAtlas"
 
 [compat]
-ITensorMPS = "0.3"
+ITensorMPS = "0.3, 0.4"
 ITensorSiteKit = "0.1"
 ITensors = "0.9"
 LatticeCore = "0.8"
