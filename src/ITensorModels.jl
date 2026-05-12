@@ -13,6 +13,7 @@ export XYh1D
 export LongRangeIsing1D
 export ExtendedHubbard1D
 export Compass1D
+export TFIM, TFIML, XXZ1D, Heisenberg1D, S1Heisenberg1D, KitaevBond, LatticeModel
 export AbstractModulation, Uniform, SSD, SinPower, SmoothBoundary, Tabulated
 export site_weight, bond_weight
 export ModulatedModel, modulated
@@ -70,6 +71,7 @@ include("models/tfim.jl")
 include("models/tfiml.jl")
 include("models/xxz.jl")
 include("models/heisenberg.jl")
+include("models/heisenberg_s1.jl")
 include("models/kitaev_bond.jl")
 include("models/xy_h_1d.jl")
 include("models/long_range_ising_1d.jl")
