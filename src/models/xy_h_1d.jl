@@ -11,10 +11,14 @@ Lieb-Schultz-Mattis chain):
 
 on `SiteType("S=1/2")`. Special cases:
 
-- `γ = 0`: isotropic XX chain (free-fermion line via Jordan-Wigner).
-- `γ = 1`: equivalent to the transverse-field Ising chain.
-- `0 < γ < 1`: Ising universality class with a quantum phase transition
-  at `|h| / J = 1`.
+- `γ = 0`: isotropic XX chain (free-fermion line via Jordan-Wigner; the
+  field `h` becomes a chemical potential on the JW fermions).
+- `γ = 1`: equivalent to the transverse-field Ising chain after a
+  global `π/2` spin rotation. Note that with `S = 1/2` operators
+  (`Sˣ = σˣ / 2`), the coupling reads `-J SˣSˣ = -(J/4) σˣσˣ`, so the
+  TFIM coupling in Pauli-operator conventions is `J/4`, not `J`.
+- `γ ≠ 0`: quantum phase transition at `|h| / J = 1` (Ising universality
+  class; the transition persists at `γ = 1`).
 
 Exactly solvable by JW + Bogoliubov (Lieb, Schultz, Mattis 1961); useful
 benchmark for DMRG and quench dynamics.

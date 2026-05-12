@@ -20,6 +20,31 @@ end
     @test length(collect(ITensors.terms(H))) == 2
 end
 
+@testset "XYh1D: bond_term coefficients (split-protocol)" begin
+    # With h ≠ 0 the bond_term must carry the two-body coupling at full
+    # value plus a half-edge -h/2 Sz on each endpoint, so that summing
+    # over interior bonds gives the right -h Sz per site and the OBC
+    # endpoints are completed by boundary_patch.
+    J, γ, h = 1.0, 0.3, 0.5
+    m = XYh1D(; J=J, γ=γ, h=h)
+    H = bond_term(m, 1, 2)
+    coefs = Float64[]
+    for t in ITensors.terms(H)
+        push!(coefs, ITensors.coefficient(t))
+    end
+    # Expected (order-independent): -J(1+γ), -J(1-γ), -h/2, -h/2
+    expected = sort([-J * (1 + γ), -J * (1 - γ), -h / 2, -h / 2])
+    @test sort(coefs) ≈ expected
+end
+
+@testset "XYh1D: boundary_patch is -h/2 Sz" begin
+    m = XYh1D(; J=1.0, γ=0.0, h=0.4)
+    H = boundary_patch(m, 1)
+    terms = collect(ITensors.terms(H))
+    @test length(terms) == 1
+    @test ITensors.coefficient(terms[1]) ≈ -0.2
+end
+
 @testset "XYh1D: onsite_term -h Sz" begin
     m = XYh1D(; J=1.0, γ=0.0, h=0.7)
     H = onsite_term(m, 3)
@@ -70,4 +95,5 @@ end
     cutoff!(sweeps, 1e-12)
     E, _ = dmrg(H, psi0, sweeps; outputlevel=0)
     @test isfinite(E)
+    @test E < 0
 end
