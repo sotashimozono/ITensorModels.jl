@@ -22,3 +22,14 @@ end
 function onsite_observable_op(m::Heisenberg1D, name::Symbol)
     onsite_observable_op(XXZ1D(; J=m.J, Δ=1.0, site=m.site), name)
 end
+
+# ---------------------------------------------------------------------
+# Split protocol: delegate to XXZ1D at Δ=1 — same alias pattern as
+# `bond_term(::Heisenberg1D)`.
+# ---------------------------------------------------------------------
+
+function bond_coupling_term(m::Heisenberg1D, i::Int, j::Int)
+    return bond_coupling_term(XXZ1D(; J=m.J, Δ=1.0, site=m.site), i, j)
+end
+
+onsite_term(::Heisenberg1D, ::Int) = OpSum()

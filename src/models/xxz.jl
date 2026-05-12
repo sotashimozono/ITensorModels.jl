@@ -46,3 +46,21 @@ function onsite_observable_op(m::XXZ1D, name::Symbol)
     name === :sz && return zop
     error("XXZ1D: unsupported onsite observable $name on site $(site_type(m))")
 end
+
+# ---------------------------------------------------------------------
+# Split protocol: pure bond coupling and pure on-site, used by
+# `ModulatedModel` to apply per-bond / per-site envelopes (SSD, etc.)
+# XXZ1D has no on-site terms, so `onsite_term` returns an empty OpSum.
+# ---------------------------------------------------------------------
+
+function bond_coupling_term(m::XXZ1D, i::Int, j::Int)
+    xop, yop, zop, scale = _xxz_ops(m.site)
+    J = m.J * scale
+    opsum = OpSum()
+    opsum += J, xop, i, xop, j
+    opsum += J, yop, i, yop, j
+    opsum += J * m.Δ, zop, i, zop, j
+    return opsum
+end
+
+onsite_term(::XXZ1D, ::Int) = OpSum()

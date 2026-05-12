@@ -6,8 +6,12 @@ using ITensorSiteKit: PhysSite
 
 export AbstractLatticeModel, site_type
 export bond_term, boundary_patch, local_ham_terms, build_opsum
+export bond_coupling_term, onsite_term
 export onsite_observable_op, build_onsite_observable_opsum
 export TFIM, TFIML, XXZ1D, Heisenberg1D, KitaevBond, LatticeModel
+export AbstractModulation, Uniform, SSD, SinPower, SmoothBoundary, Tabulated
+export site_weight, bond_weight
+export ModulatedModel, modulated
 export to_qatlas, from_qatlas
 
 """
@@ -45,6 +49,7 @@ function from_qatlas end
 
 include("core/interface.jl")
 include("core/observables.jl")
+include("core/modulation.jl")
 
 include("models/tfim.jl")
 include("models/tfiml.jl")
@@ -52,5 +57,6 @@ include("models/xxz.jl")
 include("models/heisenberg.jl")
 include("models/kitaev_bond.jl")
 include("models/lattice_model.jl")
+include("models/modulated.jl")
 
 end # module ITensorModels

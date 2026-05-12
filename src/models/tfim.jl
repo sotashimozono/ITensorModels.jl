@@ -71,3 +71,22 @@ function boundary_patch(m::TFIM, i::Int)
     opsum += -m.h / 2, xop, i
     return opsum
 end
+
+# ---------------------------------------------------------------------
+# Split protocol: pure bond coupling and pure on-site, used by
+# `ModulatedModel` to apply per-bond / per-site envelopes (SSD, etc.)
+# ---------------------------------------------------------------------
+
+function bond_coupling_term(m::TFIM, i::Int, j::Int)
+    zop = ising_z_op(m.site)
+    opsum = OpSum()
+    opsum += -m.J, zop, i, zop, j
+    return opsum
+end
+
+function onsite_term(m::TFIM, k::Int)
+    xop = ising_x_op(m.site)
+    opsum = OpSum()
+    opsum += -m.h, xop, k
+    return opsum
+end
