@@ -26,6 +26,7 @@ site_type(m::XXZ1D) = m.site
 # turns QAtlas' spin-½ coefficients into the operator norms used here.
 _xxz_ops(::SiteType"S=1/2") = ("Sx", "Sy", "Sz", 1.0)
 _xxz_ops(::SiteType"Qubit") = ("X", "Y", "Z", 0.25)
+_xxz_ops(::SiteType"S=1") = ("Sx", "Sy", "Sz", 1.0)
 
 function bond_term(m::XXZ1D, i::Int, j::Int)
     xop, yop, zop, scale = _xxz_ops(m.site)
