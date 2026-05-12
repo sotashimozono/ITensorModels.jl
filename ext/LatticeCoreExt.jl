@@ -253,7 +253,8 @@ as separate `OpSum`s — no half-distribution, no `boundary_patch`.
 be `:full`.
 """
 function ITensorModels.local_ham_terms(
-    m::ModulatedLatticeModel{<:LatticeModel{<:AbstractLattice}}, phys_sites;
+    m::ModulatedLatticeModel{<:LatticeModel{<:AbstractLattice}},
+    phys_sites;
     boundary::Symbol=:full,
 )
     boundary === :full || error(
@@ -286,8 +287,10 @@ Sum every term produced by [`local_ham_terms`](@ref) for the modulated
 lattice model into the full `OpSum`.
 """
 function ITensorModels.build_opsum(
-    m::ModulatedLatticeModel{<:LatticeModel{<:AbstractLattice}}, sites;
-    phys_sites=nothing, boundary::Symbol=:full,
+    m::ModulatedLatticeModel{<:LatticeModel{<:AbstractLattice}},
+    sites;
+    phys_sites=nothing,
+    boundary::Symbol=:full,
 )
     opsum = OpSum()
     for t in ITensorModels.local_ham_terms(m, phys_sites; boundary)

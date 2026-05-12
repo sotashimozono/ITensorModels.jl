@@ -53,9 +53,7 @@ end
 
 Convenience constructor for [`ModulatedLatticeModel`](@ref).
 """
-function modulated_lattice(
-    base::AbstractLatticeModel; envelope::AbstractModulationND
-)
+function modulated_lattice(base::AbstractLatticeModel; envelope::AbstractModulationND)
     return ModulatedLatticeModel(base, envelope)
 end
 
