@@ -1,7 +1,17 @@
 using ITensorModels
-using ITensorModels: TFIM, build_opsum, modulated, Uniform, SSD, SinPower,
-    SmoothBoundary, Tabulated, site_weight, bond_weight,
-    bond_coupling_term, onsite_term
+using ITensorModels:
+    TFIM,
+    build_opsum,
+    modulated,
+    Uniform,
+    SSD,
+    SinPower,
+    SmoothBoundary,
+    Tabulated,
+    site_weight,
+    bond_weight,
+    bond_coupling_term,
+    onsite_term
 using ITensors
 using ITensorMPS
 using ITensors: SiteType
@@ -89,7 +99,7 @@ end
 
     sx = expect(ψ_gs, "Sx")
     sx_mean = mean(sx)
-    sx_std  = std(sx)
+    sx_std = std(sx)
 
     # Ground state of -h Σ Sx (h > 0) is polarized in +Sx, so ⟨Sx⟩ > 0.
     @test sx_mean > 0
@@ -119,8 +129,12 @@ end
     m_tab = modulated(bare; L=N, modulation=Tabulated(fs, fb))
     H_tab = MPO(build_opsum(m_tab, sites; phys_sites=1:N, boundary=:full), sites)
     H_uni = MPO(
-        build_opsum(modulated(bare; L=N, modulation=Uniform()), sites;
-                    phys_sites=1:N, boundary=:full),
+        build_opsum(
+            modulated(bare; L=N, modulation=Uniform()),
+            sites;
+            phys_sites=1:N,
+            boundary=:full,
+        ),
         sites,
     )
     rng = MersenneTwister(11)
