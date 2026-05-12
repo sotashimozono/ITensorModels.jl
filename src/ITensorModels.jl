@@ -20,6 +20,7 @@ export AbstractDistance,
 export AbstractProfile, SinSquareProfile, SinPowerProfile, CosineRampProfile
 export RadialEnvelope
 export distance_at_position, distance_at, center_position, profile_value, site_envelope
+export spherical_ssd, cylindrical_ssd, rectangular_ssd
 export to_qatlas, from_qatlas
 
 """
@@ -59,6 +60,7 @@ include("core/interface.jl")
 include("core/observables.jl")
 include("core/modulation.jl")
 include("core/modulation_nd.jl")
+include("core/factories_nd.jl")
 
 include("models/tfim.jl")
 include("models/tfiml.jl")
