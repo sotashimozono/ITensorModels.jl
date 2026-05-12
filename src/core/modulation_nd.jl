@@ -149,7 +149,7 @@ function distance_at_position end
 # from both the core module and the extension.
 
 function distance_at_position(::EuclideanDistance, r, r_c)
-    s = zero(_promote_real(r, r_c))
+    s = float(zero(promote_type(eltype(r), eltype(r_c))))
     @inbounds for d in eachindex(r)
         δ = r[d] - r_c[d]
         s += δ * δ
@@ -163,7 +163,7 @@ end
 
 function distance_at_position(d::PerpendicularDistance, r, r_c)
     a = d.axis
-    s = zero(_promote_real(r, r_c))
+    s = float(zero(promote_type(eltype(r), eltype(r_c))))
     @inbounds for k in eachindex(r)
         k == a && continue
         δ = r[k] - r_c[k]
@@ -174,11 +174,6 @@ end
 
 function distance_at_position(::AxisProductDistance, r, r_c)
     return ntuple(d -> abs(r[d] - r_c[d]), length(r))
-end
-
-@inline function _promote_real(r, r_c)
-    T = promote_type(eltype(r), eltype(r_c))
-    return float(zero(T))
 end
 
 # ---------------------------------------------------------------------
@@ -327,11 +322,16 @@ function profile_value(p::CosineRampProfile, d::Real)
 end
 
 # AxisProduct path: distance is a tuple, profile carries per-axis radii.
+# Bodies inline the same scalar formula used by the `Real`-distance
+# methods above; an explicit private helper is not used because the
+# expression is short and the duplication is the single point of
+# correspondence between the two paths.
 
 function profile_value(p::SinSquareProfile, ds::Tuple{Vararg{Real}})
     val = 1.0
     @inbounds for d in eachindex(ds)
-        val *= _axis_sin_square(ds[d], float(p.R[d]))
+        x, R = float(ds[d]), float(p.R[d])
+        val *= x >= R ? 0.0 : 1 - sin(pi * x / (2R))^2
     end
     return val
 end
@@ -339,7 +339,8 @@ end
 function profile_value(p::SinPowerProfile{N}, ds::Tuple{Vararg{Real}}) where {N}
     val = 1.0
     @inbounds for d in eachindex(ds)
-        val *= _axis_sin_power(ds[d], float(p.R[d]), N)
+        x, R = float(ds[d]), float(p.R[d])
+        val *= x >= R ? 0.0 : 1 - sin(pi * x / (2R))^N
     end
     return val
 end
@@ -352,16 +353,6 @@ function profile_value(::CosineRampProfile, ::Tuple{Vararg{Real}})
         "(EuclideanDistance / AxialDistance / PerpendicularDistance) " *
         "for the cosine ramp.",
     )
-end
-
-@inline function _axis_sin_square(d::Real, R::Real)
-    d >= R && return 0.0
-    return 1 - sin(pi * d / (2R))^2
-end
-
-@inline function _axis_sin_power(d::Real, R::Real, N::Integer)
-    d >= R && return 0.0
-    return 1 - sin(pi * d / (2R))^N
 end
 
 # ---------------------------------------------------------------------
@@ -385,9 +376,14 @@ site_weight(env, lat, k)    = f(position(lat, k))
 bond_weight(env, lat, i, j) = f((position(lat, i) + position(lat, j)) / 2)   # midpoint
 ```
 
-The midpoint convention for `bond_weight` matches the existing 1D
-`bond_weight(SSD, i, L) = sin²(π i / L)` rule (site at half-integer
-`i − 1/2`, bond at integer `i`).
+The midpoint convention is a geometric choice on real-space positions
+and is the analogue — not a literal port — of the 1D
+`bond_weight(SSD, i, L) = sin²(π i / L)` rule, where on the unit-spacing
+1D chain the integer bond index `i` happens to coincide with the
+Cartesian midpoint of the bond. The two conventions agree on the
+unit-spacing 1D chain and intentionally diverge from LatticeCore's
+two-endpoint arithmetic mean `(f(r_i) + f(r_j)) / 2`; see decision D2
+in `docs/src/design/modulation_nd.md`.
 """
 struct RadialEnvelope{C<:AbstractCenter,D<:AbstractDistance,P<:AbstractProfile} <:
        AbstractModulationND
@@ -472,3 +468,40 @@ Evaluate the distance metric at lattice site `k`. Defers to
 `LatticeCoreExt`.
 """
 function distance_at end
+
+# ---------------------------------------------------------------------
+# Extension-missing fallbacks
+# ---------------------------------------------------------------------
+# When the `LatticeCoreExt` extension is not loaded, the lattice-bound
+# methods (`center_position(c, lat)`, `distance_at(dist, lat, k, r_c)`,
+# `site_envelope`, `site_weight(env, lat, k)`, `bond_weight(env, lat,
+# i, j)`) have no methods. Without the fallbacks below, calling them
+# yields an opaque `MethodError` with no hint that the user needs to
+# `using LatticeCore`. Each fallback dispatches on `Any` for the
+# lattice argument; the extension's `AbstractLattice` methods are
+# strictly more specific and take precedence when loaded.
+
+const _LATTICE_EXT_HINT =
+    "lives in the `LatticeCoreExt` package extension. Add `LatticeCore` " *
+    "to your project and load it (`using LatticeCore`) before constructing " *
+    "lattice-bound modulation envelopes."
+
+function center_position(::AbstractCenter, lat)
+    return error("center_position(::AbstractCenter, lat) " * _LATTICE_EXT_HINT)
+end
+
+function distance_at(::AbstractDistance, lat, ::Int, _r_c)
+    return error("distance_at(::AbstractDistance, lat, k, r_c) " * _LATTICE_EXT_HINT)
+end
+
+function site_envelope(::RadialEnvelope, lat, ::Int)
+    return error("site_envelope(::RadialEnvelope, lat, k) " * _LATTICE_EXT_HINT)
+end
+
+function site_weight(::AbstractModulationND, lat, ::Int)
+    return error("site_weight(::AbstractModulationND, lat, k) " * _LATTICE_EXT_HINT)
+end
+
+function bond_weight(::AbstractModulationND, lat, ::Int, ::Int)
+    return error("bond_weight(::AbstractModulationND, lat, i, j) " * _LATTICE_EXT_HINT)
+end

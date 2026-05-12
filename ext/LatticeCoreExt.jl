@@ -137,15 +137,7 @@ Midpoint of the axis-aligned bounding box, `(min(r_k) + max(r_k)) / 2`
 per axis.
 """
 function ITensorModels.center_position(::BoundingBoxCenter, lat::AbstractLattice)
-    N = num_sites(lat)
-    N >= 1 || error("center_position: lattice has zero sites")
-    lo = position(lat, 1)
-    hi = lo
-    for k in 2:N
-        p = position(lat, k)
-        lo = min.(lo, p)
-        hi = max.(hi, p)
-    end
+    lo, hi = _bounding_extent(lat)
     return (lo + hi) / 2
 end
 
@@ -224,30 +216,29 @@ end
 # ---------------------------------------------------------------------
 
 """
-    _onsite_submodel_for(m::LatticeModel, k::Int)
+    _onsite_submodels_for_all(m::LatticeModel) -> Vector
 
-Return the submodel whose `onsite_term` is used at lattice site `k`.
-Iterates the bonds touching `k`; if every touching bond resolves to the
-same submodel (via `_lookup_bond_model`), returns it. If the touching
-bonds resolve to **different** submodels, raises — per-site model
-overrides are not supported yet, and silently picking the first match
-would yield a wrong on-site field on heterogeneous lattices.
-
-All bundled models (`TFIM`, `TFIML`, `XXZ1D`, `Heisenberg1D`) have
-site-uniform on-site terms, so on a homogeneous `Dict(:nearest => sub)`
-this collapses to a single submodel as before.
+Resolve the on-site submodel for every site in a single pass over
+`bonds(m.lattice)`. Returns a vector indexed by site number. Raises if
+two bonds touching the same site resolve to different submodels
+(per-site overrides are not supported yet) or if any site is
+untouched by bonds. Replaces the previous `_onsite_submodel_for(m, k)`
+per-site helper, which was O(N_bonds) per call and therefore O(N_sites
+× N_bonds) when invoked from the `local_ham_terms` inner loop.
 """
-function _onsite_submodel_for(m::LatticeModel, k::Int)
-    first_sub = nothing
+function _onsite_submodels_for_all(m::LatticeModel)
+    Nsite = num_sites(m.lattice)
+    subs = Vector{Any}(undef, Nsite)
+    fill!(subs, nothing)
     for b in bonds(m.lattice)
-        if b.i == k || b.j == k
-            sub = _lookup_bond_model(m, b.type)
-            if first_sub === nothing
-                first_sub = sub
-            elseif !(sub === first_sub)
+        sub = _lookup_bond_model(m, b.type)
+        for k in (b.i, b.j)
+            if subs[k] === nothing
+                subs[k] = sub
+            elseif !(subs[k] === sub)
                 error(
                     "ModulatedLatticeModel: site $k is touched by bonds resolving " *
-                    "to different submodels ($(typeof(first_sub)) vs $(typeof(sub))). " *
+                    "to different submodels ($(typeof(subs[k])) vs $(typeof(sub))). " *
                     "Per-site model overrides are not yet supported; either make " *
                     "bond_models map every touching bond type to the same submodel " *
                     "instance, or wait for a future `onsite_submodel_for_site` accessor.",
@@ -255,11 +246,13 @@ function _onsite_submodel_for(m::LatticeModel, k::Int)
             end
         end
     end
-    first_sub === nothing && error(
-        "ModulatedLatticeModel: no bond touches site $k; cannot resolve " *
-        "onsite_term submodel.",
-    )
-    return first_sub
+    for k in 1:Nsite
+        subs[k] === nothing && error(
+            "ModulatedLatticeModel: no bond touches site $k; cannot resolve " *
+            "onsite_term submodel.",
+        )
+    end
+    return subs
 end
 
 """
@@ -292,6 +285,9 @@ function ITensorModels.local_ham_terms(
     # `center_position` is O(N_sites); calling `bond_weight` / `site_weight`
     # from the loops would recompute it for every term.
     r_c = ITensorModels.center_position(env.center, lat)
+    # Resolve every site's on-site submodel in a single bond-pass instead
+    # of an O(N_sites × N_bonds) per-site scan.
+    onsite_subs = _onsite_submodels_for_all(base)
     terms = OpSum[]
     for b in bonds(lat)
         sub = _lookup_bond_model(base, b.type)
@@ -301,10 +297,9 @@ function ITensorModels.local_ham_terms(
         push!(terms, fb * bond_coupling_term(sub, ord[b.i], ord[b.j]))
     end
     for k in 1:num_sites(lat)
-        sub = _onsite_submodel_for(base, k)
         d_k = distance_at_position(env.distance, position(lat, k), r_c)
         fk = profile_value(env.profile, d_k)
-        push!(terms, fk * onsite_term(sub, ord[k]))
+        push!(terms, fk * onsite_term(onsite_subs[k], ord[k]))
     end
     return terms
 end
