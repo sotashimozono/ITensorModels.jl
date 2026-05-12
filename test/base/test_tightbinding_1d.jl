@@ -71,8 +71,29 @@ end
 
     psi0 = random_mps(MersenneTwister(0xfe), sites; linkdims=16)
     sweeps = Sweeps(20)
-    maxdim!(sweeps, 10, 20, 40, 80, 100, 120, 120, 120, 120, 120,
-        120, 120, 120, 120, 120, 120, 120, 120, 120, 120)
+    maxdim!(
+        sweeps,
+        10,
+        20,
+        40,
+        80,
+        100,
+        120,
+        120,
+        120,
+        120,
+        120,
+        120,
+        120,
+        120,
+        120,
+        120,
+        120,
+        120,
+        120,
+        120,
+        120,
+    )
     cutoff!(sweeps, 1e-12)
     E_dmrg, _ = dmrg(H, psi0, sweeps; outputlevel=0)
     @test E_dmrg ≈ E_exact rtol = 1e-5
