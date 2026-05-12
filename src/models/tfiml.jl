@@ -45,3 +45,24 @@ function boundary_patch(m::TFIML, i::Int)
     opsum += -m.h_z / 2, zop, i
     return opsum
 end
+
+# ---------------------------------------------------------------------
+# Split protocol: bond is the pure ZZ coupling, on-site combines
+# transverse and longitudinal fields.
+# ---------------------------------------------------------------------
+
+function bond_coupling_term(m::TFIML, i::Int, j::Int)
+    zop = ising_z_op(m.site)
+    opsum = OpSum()
+    opsum += -m.J, zop, i, zop, j
+    return opsum
+end
+
+function onsite_term(m::TFIML, k::Int)
+    zop = ising_z_op(m.site)
+    xop = ising_x_op(m.site)
+    opsum = OpSum()
+    opsum += -m.h_x, xop, k
+    opsum += -m.h_z, zop, k
+    return opsum
+end

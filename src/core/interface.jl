@@ -75,3 +75,33 @@ function build_opsum(
     end
     return opsum
 end
+
+# ---------------------------------------------------------------------
+# Split protocol (opt-in)
+# ---------------------------------------------------------------------
+#
+# The plain `bond_term` returns an `OpSum` that mixes bond couplings
+# with half-weight on-site terms; once aggregated those parts cannot
+# be separated. Models that want to support per-bond / per-site
+# modulation (Sine-Square Deformation, Smooth Boundary, Hotta-Shibata
+# sin^N, custom envelopes, …) opt in by implementing the two methods
+# below. `ModulatedModel` consumes the split protocol; the existing
+# `bond_term` / `boundary_patch` of base models stays untouched.
+
+"""
+    bond_coupling_term(model, i, j) -> OpSum
+
+Pure two-site coupling on bond `(i, j)` with **no** on-site weight.
+For TFIM this is `-J Zᵢ Zⱼ`. Models override this to participate in the
+split protocol consumed by [`ModulatedModel`](@ref).
+"""
+function bond_coupling_term end
+
+"""
+    onsite_term(model, k) -> OpSum
+
+Pure on-site term at site `k` with **full** weight (not halved). For
+TFIM this is `-h Xₖ`. Models override this to participate in the
+split protocol consumed by [`ModulatedModel`](@ref).
+"""
+function onsite_term end
