@@ -1,7 +1,15 @@
 using ITensorModels
-using ITensorModels: TFIM, TFIML, XXZ1D, Heisenberg1D,
-    build_opsum, modulated, Uniform, SSD,
-    bond_coupling_term, onsite_term
+using ITensorModels:
+    TFIM,
+    TFIML,
+    XXZ1D,
+    Heisenberg1D,
+    build_opsum,
+    modulated,
+    Uniform,
+    SSD,
+    bond_coupling_term,
+    onsite_term
 using ITensors
 using ITensorMPS
 using Random
@@ -43,18 +51,23 @@ end
     sites = siteinds("S=1/2", N)
 
     H_bare = MPO(build_opsum(bare, sites; phys_sites=1:N, boundary=:full), sites)
-    H_uni  = MPO(
-        build_opsum(modulated(bare; L=N, modulation=Uniform()),
-                    sites; phys_sites=1:N, boundary=:full),
+    H_uni = MPO(
+        build_opsum(
+            modulated(bare; L=N, modulation=Uniform()),
+            sites;
+            phys_sites=1:N,
+            boundary=:full,
+        ),
         sites,
     )
     E_bare, _ = _dmrg_gs(H_bare, sites)
-    E_uni, _  = _dmrg_gs(H_uni, sites)
+    E_uni, _ = _dmrg_gs(H_uni, sites)
     @test E_uni ≈ E_bare rtol = RTOL_ENERGY
 
     H_ssd = MPO(
-        build_opsum(modulated(bare; L=N, modulation=SSD()),
-                    sites; phys_sites=1:N, boundary=:full),
+        build_opsum(
+            modulated(bare; L=N, modulation=SSD()), sites; phys_sites=1:N, boundary=:full
+        ),
         sites,
     )
     E_ssd, ψ_ssd = _dmrg_gs(H_ssd, sites)
@@ -72,13 +85,17 @@ end
         bare = XXZ1D(; J=1.0, Δ=Δ)
         sites = siteinds("S=1/2", N)
         H_bare = MPO(build_opsum(bare, sites; phys_sites=1:N, boundary=:full), sites)
-        H_uni  = MPO(
-            build_opsum(modulated(bare; L=N, modulation=Uniform()),
-                        sites; phys_sites=1:N, boundary=:full),
+        H_uni = MPO(
+            build_opsum(
+                modulated(bare; L=N, modulation=Uniform()),
+                sites;
+                phys_sites=1:N,
+                boundary=:full,
+            ),
             sites,
         )
         E_bare, _ = _dmrg_gs(H_bare, sites; seed=Int(round(100 * (1 + Δ))))
-        E_uni, _  = _dmrg_gs(H_uni, sites; seed=Int(round(100 * (1 + Δ))))
+        E_uni, _ = _dmrg_gs(H_uni, sites; seed=Int(round(100 * (1 + Δ))))
         @test E_uni ≈ E_bare rtol = RTOL_ENERGY
     end
 
@@ -88,8 +105,9 @@ end
     bare = XXZ1D(; J=1.0, Δ=0.5)
     sites = siteinds("S=1/2", N)
     H_ssd = MPO(
-        build_opsum(modulated(bare; L=N, modulation=SSD()),
-                    sites; phys_sites=1:N, boundary=:full),
+        build_opsum(
+            modulated(bare; L=N, modulation=SSD()), sites; phys_sites=1:N, boundary=:full
+        ),
         sites,
     )
     _, ψ_ssd = _dmrg_gs(H_ssd, sites; sweeps_n=30, maxd=300)
@@ -107,21 +125,29 @@ end
     sites = siteinds("S=1/2", N)
 
     H_bare = MPO(build_opsum(bare, sites; phys_sites=1:N, boundary=:full), sites)
-    H_uni  = MPO(
-        build_opsum(modulated(bare; L=N, modulation=Uniform()),
-                    sites; phys_sites=1:N, boundary=:full),
+    H_uni = MPO(
+        build_opsum(
+            modulated(bare; L=N, modulation=Uniform()),
+            sites;
+            phys_sites=1:N,
+            boundary=:full,
+        ),
         sites,
     )
     E_bare, _ = _dmrg_gs(H_bare, sites)
-    E_uni, _  = _dmrg_gs(H_uni, sites)
+    E_uni, _ = _dmrg_gs(H_uni, sites)
     @test E_uni ≈ E_bare rtol = RTOL_ENERGY
 
     # Heisenberg AF is gapless → SSD GS bulk ≈ PBC GS bulk.
     N2 = 32
     sites2 = siteinds("S=1/2", N2)
     H_ssd = MPO(
-        build_opsum(modulated(Heisenberg1D(; J=1.0); L=N2, modulation=SSD()),
-                    sites2; phys_sites=1:N2, boundary=:full),
+        build_opsum(
+            modulated(Heisenberg1D(; J=1.0); L=N2, modulation=SSD()),
+            sites2;
+            phys_sites=1:N2,
+            boundary=:full,
+        ),
         sites2,
     )
     _, ψ_ssd = _dmrg_gs(H_ssd, sites2; sweeps_n=30, maxd=300)

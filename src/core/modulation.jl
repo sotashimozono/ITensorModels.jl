@@ -82,10 +82,8 @@ yields faster decay toward the boundary.
 """
 struct SinPower{N} <: AbstractModulation end
 
-site_weight(::SinPower{N}, i::Int, L::Int) where {N} =
-    sin(pi * (i - 0.5) / L)^N
-bond_weight(::SinPower{N}, i::Int, L::Int) where {N} =
-    sin(pi * i / L)^N
+site_weight(::SinPower{N}, i::Int, L::Int) where {N} = sin(pi * (i - 0.5) / L)^N
+bond_weight(::SinPower{N}, i::Int, L::Int) where {N} = sin(pi * i / L)^N
 
 # ---------------------------------------------------------------------
 # SmoothBoundary — Vekic–White (1993) smooth boundary conditions
@@ -115,7 +113,7 @@ end
 function site_weight(m::SmoothBoundary, i::Int, L::Int)
     e = m.edge
     e <= 0 && return 1.0
-    d_left  = i - 0.5
+    d_left = i - 0.5
     d_right = L - i + 0.5
     return _smooth_ramp(min(d_left, d_right), e)
 end
@@ -124,7 +122,7 @@ function bond_weight(m::SmoothBoundary, i::Int, L::Int)
     e = m.edge
     e <= 0 && return 1.0
     # bond i sits between sites i and i+1, i.e. at position i (integer).
-    d_left  = i
+    d_left = i
     d_right = L - i
     return _smooth_ramp(min(d_left, d_right), e)
 end
@@ -147,15 +145,13 @@ struct Tabulated <: AbstractModulation
 end
 
 function site_weight(m::Tabulated, i::Int, L::Int)
-    length(m.f_site) == L || error(
-        "Tabulated: f_site length $(length(m.f_site)) != chain length L=$L",
-    )
+    length(m.f_site) == L ||
+        error("Tabulated: f_site length $(length(m.f_site)) != chain length L=$L")
     return m.f_site[i]
 end
 
 function bond_weight(m::Tabulated, i::Int, L::Int)
-    length(m.f_bond) == L - 1 || error(
-        "Tabulated: f_bond length $(length(m.f_bond)) != L-1=$(L-1)",
-    )
+    length(m.f_bond) == L - 1 ||
+        error("Tabulated: f_bond length $(length(m.f_bond)) != L-1=$(L-1)")
     return m.f_bond[i]
 end

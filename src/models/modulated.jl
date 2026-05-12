@@ -33,9 +33,9 @@ struct ModulatedModel{M<:AbstractLatticeModel,Mod<:AbstractModulation} <:
     L::Int
     modulation::Mod
 
-    function ModulatedModel(base::M, L::Int, modulation::Mod) where {
-        M<:AbstractLatticeModel,Mod<:AbstractModulation
-    }
+    function ModulatedModel(
+        base::M, L::Int, modulation::Mod
+    ) where {M<:AbstractLatticeModel,Mod<:AbstractModulation}
         L >= 2 || error("ModulatedModel: chain length L=$L must be >= 2.")
         return new{M,Mod}(base, L, modulation)
     end
@@ -47,9 +47,9 @@ end
 Convenience constructor. Defaults to [`SSD()`](@ref) — the most common
 modulation in the literature.
 """
-modulated(
-    base::AbstractLatticeModel; L::Int, modulation::AbstractModulation=SSD()
-) = ModulatedModel(base, L, modulation)
+function modulated(base::AbstractLatticeModel; L::Int, modulation::AbstractModulation=SSD())
+    ModulatedModel(base, L, modulation)
+end
 
 site_type(m::ModulatedModel) = site_type(m.base)
 
