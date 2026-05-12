@@ -140,7 +140,6 @@ end
     @test real(inner(ψ_q_up', H_q, ψ_q_up)) ≈ expected rtol = 1e-12
 end
 
-
 @testset "S1Heisenberg1D bridge: to_qatlas + round-trip" begin
     m = S1Heisenberg1D(; J=1.3)
     qm = to_qatlas(m)
@@ -179,7 +178,29 @@ end
     H = MPO(ITensorModels.build_opsum(m, sites; phys_sites=1:N, boundary=:full), sites)
     psi0 = random_mps(MersenneTwister(0x51), sites; linkdims=8)
     sweeps = Sweeps(20)
-    maxdim!(sweeps, 10, 20, 40, 60, 80, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100)
+    maxdim!(
+        sweeps,
+        10,
+        20,
+        40,
+        60,
+        80,
+        100,
+        100,
+        100,
+        100,
+        100,
+        100,
+        100,
+        100,
+        100,
+        100,
+        100,
+        100,
+        100,
+        100,
+        100,
+    )
     cutoff!(sweeps, 1e-12)
     E_dmrg, _ = dmrg(H, psi0, sweeps; outputlevel=0)
 

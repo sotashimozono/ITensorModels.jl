@@ -64,7 +64,9 @@ end
 
 # --- S1Heisenberg1D ----------------------------------------------------
 
-ITensorModels.to_qatlas(m::ITensorModels.S1Heisenberg1D) = ITensorModels.to_qatlas(m, m.site)
+function ITensorModels.to_qatlas(m::ITensorModels.S1Heisenberg1D)
+    ITensorModels.to_qatlas(m, m.site)
+end
 
 # QAtlas.S1Heisenberg1D uses the same J coefficient on spin-1 Sx/Sy/Sz
 # matrices (eigenvalues -1, 0, +1) -- no rescaling needed.
