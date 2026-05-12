@@ -178,9 +178,7 @@ end
 `profile_value(env.profile, distance_at(env.distance, lat, k, r_c))`
 with `r_c = center_position(env.center, lat)`.
 """
-function ITensorModels.site_envelope(
-    env::RadialEnvelope, lat::AbstractLattice, k::Int
-)
+function ITensorModels.site_envelope(env::RadialEnvelope, lat::AbstractLattice, k::Int)
     r_c = ITensorModels.center_position(env.center, lat)
     d = ITensorModels.distance_at(env.distance, lat, k, r_c)
     return profile_value(env.profile, d)
@@ -192,9 +190,7 @@ end
 ND `site_weight`: equals `site_envelope(env, lat, k)`. This is the
 ND-signature companion to the 1D `site_weight(mod, i::Int, L::Int)`.
 """
-function ITensorModels.site_weight(
-    env::RadialEnvelope, lat::AbstractLattice, k::Int
-)
+function ITensorModels.site_weight(env::RadialEnvelope, lat::AbstractLattice, k::Int)
     return ITensorModels.site_envelope(env, lat, k)
 end
 

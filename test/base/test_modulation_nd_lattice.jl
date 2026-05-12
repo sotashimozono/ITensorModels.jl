@@ -31,7 +31,8 @@ end
 @testset "center_position: ExplicitCenter validates dimension" begin
     lat = Lattice2D.honeycomb(4, 4; boundary=OpenAxis())
     @test_throws ErrorException ITensorModels.center_position(
-        ExplicitCenter([0.0, 0.0, 0.0]), lat   # 3D vector for 2D lattice
+        ExplicitCenter([0.0, 0.0, 0.0]),
+        lat,   # 3D vector for 2D lattice
     )
     rc = ITensorModels.center_position(ExplicitCenter([1.5, 2.5]), lat)
     @test rc[1] ≈ 1.5
@@ -42,7 +43,7 @@ end
     lat = Lattice2D.honeycomb(4, 4; boundary=OpenAxis())
     rc = ITensorModels.center_position(BoundingBoxCenter(), lat)
     p1 = position(lat, 1)
-    expected = sqrt(sum((p1 .- rc).^2))
+    expected = sqrt(sum((p1 .- rc) .^ 2))
     @test ITensorModels.distance_at(EuclideanDistance(), lat, 1, rc) ≈ expected
     @test ITensorModels.distance_at(AxialDistance(1), lat, 1, rc) ≈ abs(p1[1] - rc[1])
 end
@@ -53,7 +54,7 @@ end
     ps = collect(LatticeCore.positions(lat))
     # Choose R = max distance from center so the most distant site sits
     # at the envelope boundary (weight ≈ 0).
-    R = sqrt(maximum(sum((p .- rc).^2) for p in ps))
+    R = sqrt(maximum(sum((p .- rc) .^ 2) for p in ps))
     env = RadialEnvelope(BoundingBoxCenter(), EuclideanDistance(), SinSquareProfile(R))
 
     weights = [ITensorModels.site_weight(env, lat, k) for k in 1:num_sites(lat)]
@@ -62,9 +63,9 @@ end
     end
     @test all(w -> 0 <= w <= 1, weights)
     # The most-central site carries near-unit weight; corners are near zero.
-    k_central = argmin([sqrt(sum((ps[k] .- rc).^2)) for k in 1:length(ps)])
+    k_central = argmin([sqrt(sum((ps[k] .- rc) .^ 2)) for k in 1:length(ps)])
     @test weights[k_central] >= 0.9
-    k_corner = argmax([sqrt(sum((ps[k] .- rc).^2)) for k in 1:length(ps)])
+    k_corner = argmax([sqrt(sum((ps[k] .- rc) .^ 2)) for k in 1:length(ps)])
     @test weights[k_corner] <= 0.05
 end
 
@@ -94,13 +95,13 @@ end
     lat = Lattice2D.honeycomb(4, 4; boundary=OpenAxis())
     rc = ITensorModels.center_position(BoundingBoxCenter(), lat)
     ps = collect(LatticeCore.positions(lat))
-    R = sqrt(maximum(sum((p .- rc).^2) for p in ps)) + 0.5
+    R = sqrt(maximum(sum((p .- rc) .^ 2) for p in ps)) + 0.5
     env = RadialEnvelope(BoundingBoxCenter(), EuclideanDistance(), SinSquareProfile(R))
 
     bs = collect(bonds(lat))
     for b in bs[1:min(end, 10)]
         r_mid = (position(lat, b.i) + position(lat, b.j)) / 2
-        d = sqrt(sum((r_mid .- rc).^2))
+        d = sqrt(sum((r_mid .- rc) .^ 2))
         expected = d >= R ? 0.0 : 1 - sin(pi * d / (2R))^2
         @test ITensorModels.bond_weight(env, lat, b.i, b.j) ≈ expected
     end
@@ -110,7 +111,7 @@ end
     lat = Lattice2D.honeycomb(4, 4; boundary=OpenAxis())
     rc = ITensorModels.center_position(BoundingBoxCenter(), lat)
     ps = collect(LatticeCore.positions(lat))
-    R = sqrt(maximum(sum((p .- rc).^2) for p in ps))
+    R = sqrt(maximum(sum((p .- rc) .^ 2) for p in ps))
     env = RadialEnvelope(BoundingBoxCenter(), EuclideanDistance(), SinSquareProfile(R))
     bs = collect(bonds(lat))
     for b in bs[1:min(end, 8)]
