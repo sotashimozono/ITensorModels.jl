@@ -3,9 +3,22 @@ module LatticeCoreExt
 using ITensors: OpSum, hastags
 using ITensorModels
 using ITensorModels:
-    AbstractLatticeModel, LatticeModel, bond_term, local_ham_terms, boundary_patch
+    AbstractLatticeModel,
+    LatticeModel,
+    bond_term,
+    local_ham_terms,
+    boundary_patch,
+    AbstractModulationND,
+    RadialEnvelope,
+    AbstractCenter,
+    GeometricCenter,
+    BoundingBoxCenter,
+    ExplicitCenter,
+    AbstractDistance,
+    distance_at_position,
+    profile_value
 using ITensorSiteKit: PhysSite
-using LatticeCore: AbstractLattice, bonds, num_sites
+using LatticeCore: AbstractLattice, position, bonds, num_sites
 
 # ---------------------------------------------------------------------
 # Helpers
@@ -40,7 +53,7 @@ function _lookup_bond_model(m::LatticeModel, bt::Symbol)
 end
 
 # ---------------------------------------------------------------------
-# local_ham_terms / build_opsum
+# local_ham_terms / build_opsum for LatticeModel
 # ---------------------------------------------------------------------
 
 """
@@ -90,6 +103,115 @@ function ITensorModels.build_opsum(
         opsum += t
     end
     return opsum
+end
+
+# ---------------------------------------------------------------------
+# ND modulation envelopes — lattice-bound evaluation
+# ---------------------------------------------------------------------
+
+"""
+    center_position(::GeometricCenter, lat::AbstractLattice)
+
+Geometric mean of all site positions, `r_c = (1/N) Σ_k r_k`. The
+returned value is the same type as `position(lat, 1)` (typically an
+`SVector{D, T}`), so downstream arithmetic stays type-stable on the
+StaticArrays fast path provided by `LatticeCore`.
+"""
+function ITensorModels.center_position(::GeometricCenter, lat::AbstractLattice)
+    N = num_sites(lat)
+    N >= 1 || error("center_position: lattice has zero sites")
+    acc = position(lat, 1)
+    for k in 2:N
+        acc = acc + position(lat, k)
+    end
+    return acc / N
+end
+
+"""
+    center_position(::BoundingBoxCenter, lat::AbstractLattice)
+
+Midpoint of the axis-aligned bounding box, `(min(r_k) + max(r_k)) / 2`
+per axis.
+"""
+function ITensorModels.center_position(::BoundingBoxCenter, lat::AbstractLattice)
+    N = num_sites(lat)
+    N >= 1 || error("center_position: lattice has zero sites")
+    lo = position(lat, 1)
+    hi = lo
+    for k in 2:N
+        p = position(lat, k)
+        lo = min.(lo, p)
+        hi = max.(hi, p)
+    end
+    return (lo + hi) / 2
+end
+
+"""
+    center_position(c::ExplicitCenter, lat::AbstractLattice)
+
+Return the user-supplied center vector. Length must match
+`dimension(lat)`.
+"""
+function ITensorModels.center_position(c::ExplicitCenter, lat::AbstractLattice)
+    length(c.r) == length(position(lat, 1)) || error(
+        "ExplicitCenter: r has length $(length(c.r)) but lattice has " *
+        "dimension $(length(position(lat, 1)))",
+    )
+    return c.r
+end
+
+"""
+    distance_at(dist::AbstractDistance, lat::AbstractLattice, k::Int, r_c)
+
+Evaluate the distance metric at lattice site `k`. Defers to
+`distance_at_position(dist, position(lat, k), r_c)`.
+"""
+function ITensorModels.distance_at(
+    dist::AbstractDistance, lat::AbstractLattice, k::Int, r_c
+)
+    return distance_at_position(dist, position(lat, k), r_c)
+end
+
+"""
+    site_envelope(env::RadialEnvelope, lat::AbstractLattice, k::Int)
+
+`profile_value(env.profile, distance_at(env.distance, lat, k, r_c))`
+with `r_c = center_position(env.center, lat)`.
+"""
+function ITensorModels.site_envelope(
+    env::RadialEnvelope, lat::AbstractLattice, k::Int
+)
+    r_c = ITensorModels.center_position(env.center, lat)
+    d = ITensorModels.distance_at(env.distance, lat, k, r_c)
+    return profile_value(env.profile, d)
+end
+
+"""
+    site_weight(env::RadialEnvelope, lat::AbstractLattice, k::Int)
+
+ND `site_weight`: equals `site_envelope(env, lat, k)`. This is the
+ND-signature companion to the 1D `site_weight(mod, i::Int, L::Int)`.
+"""
+function ITensorModels.site_weight(
+    env::RadialEnvelope, lat::AbstractLattice, k::Int
+)
+    return ITensorModels.site_envelope(env, lat, k)
+end
+
+"""
+    bond_weight(env::RadialEnvelope, lat::AbstractLattice, i::Int, j::Int)
+
+ND `bond_weight`: midpoint evaluation `f((r_i + r_j) / 2)`. Matches the
+1D convention `bond_weight(SSD, i, L) = sin²(π i / L)` (sites at
+half-integer positions, bond midpoints at integers).
+"""
+function ITensorModels.bond_weight(
+    env::RadialEnvelope, lat::AbstractLattice, i::Int, j::Int
+)
+    r_c = ITensorModels.center_position(env.center, lat)
+    r_mid = (position(lat, i) + position(lat, j)) / 2
+    d = distance_at_position(env.distance, r_mid, r_c)
+    return profile_value(env.profile, d)
 end
 
 end # module LatticeCoreExt
