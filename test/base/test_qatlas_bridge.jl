@@ -206,3 +206,51 @@ end
 
     @test E_dmrg ≈ E_qatlas rtol = 1e-5
 end
+
+# ── AKLT1D round-trip ─────────────────────────────────────────────────
+
+@testset "AKLT1D round-trip preserves J" begin
+    using ITensorModels: AKLT1D
+    m = AKLT1D(; J=0.7)
+    qm = ITensorModels.to_qatlas(m)
+    @test qm.J == 0.7
+    back = ITensorModels.from_qatlas(qm)
+    @test back.J == 0.7
+end
+
+@testset "AKLT1D: GS energy density matches AKLT exact -2J/3 in QAtlas" begin
+    using ITensorModels: AKLT1D
+    using QAtlas: GroundStateEnergyDensity, Infinite
+    for J in (0.5, 1.0, 1.7)
+        m = AKLT1D(; J=J)
+        e0 = QAtlas.fetch(m, GroundStateEnergyDensity(), Infinite())
+        @test e0 ≈ -2J / 3 rtol = 1e-12
+    end
+end
+
+# ── Hubbard1D round-trip ─────────────────────────────────────────────
+
+@testset "Hubbard1D round-trip negates μ (opposite sign conventions)" begin
+    using ITensorModels: Hubbard1D
+    # ITensorModels uses +μN, QAtlas uses -μN -> bridge negates μ.
+    m = Hubbard1D(; t=1.0, U=4.0, μ=-2.0)  # half filling in ITensorModels convention
+    qm = ITensorModels.to_qatlas(m)
+    @test qm.t == 1.0
+    @test qm.U == 4.0
+    @test qm.μ == 2.0                       # half filling in QAtlas convention
+    back = ITensorModels.from_qatlas(qm)
+    @test back.t == m.t && back.U == m.U && back.μ == m.μ
+end
+
+@testset "Hubbard1D: half-filling GS energy density (Lieb-Wu) via bridge" begin
+    using ITensorModels: Hubbard1D
+    using QAtlas: GroundStateEnergyDensity, Infinite
+    # Use a non-trivial U/t and check the bridge dispatches to the
+    # Lieb-Wu integral and returns the same value as a direct QAtlas call.
+    t, U = 1.0, 4.0
+    m = Hubbard1D(; t=t, U=U, μ=-U / 2)               # ITM half-filling
+    qm_direct = QAtlas.Hubbard1D(; t=t, U=U, μ=U / 2)  # QAtlas half-filling
+    e_bridge = QAtlas.fetch(m, GroundStateEnergyDensity(), Infinite())
+    e_direct = QAtlas.fetch(qm_direct, GroundStateEnergyDensity(), Infinite())
+    @test e_bridge ≈ e_direct rtol = 1e-12
+end

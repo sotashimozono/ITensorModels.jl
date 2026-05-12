@@ -78,6 +78,37 @@ function ITensorModels.from_qatlas(qm::QAtlas.S1Heisenberg1D)
     return ITensorModels.S1Heisenberg1D(; J=qm.J)
 end
 
+
+# --- AKLT1D -------------------------------------------------------------
+
+ITensorModels.to_qatlas(m::ITensorModels.AKLT1D) = ITensorModels.to_qatlas(m, m.site)
+
+# QAtlas.AKLT1D uses the same J coefficient on spin-1 S·S + (1/3)(S·S)^2
+# bond Hamiltonian — no rescaling on SiteType("S=1").
+function ITensorModels.to_qatlas(m::ITensorModels.AKLT1D, ::SiteType"S=1")
+    return QAtlas.AKLT1D(; J=m.J)
+end
+
+function ITensorModels.from_qatlas(qm::QAtlas.AKLT1D)
+    return ITensorModels.AKLT1D(; J=qm.J)
+end
+
+# --- Hubbard1D ----------------------------------------------------------
+
+ITensorModels.to_qatlas(m::ITensorModels.Hubbard1D) = ITensorModels.to_qatlas(m, m.site)
+
+# Sign-convention divergence:
+#   ITensorModels writes H = -t Σ hop + U Σ n↑n↓ + μ Σ n  (half-filling μ = -U/2)
+#   QAtlas writes        H = -t Σ hop + U Σ n↑n↓ - μ Σ n  (half-filling μ = +U/2)
+# Same physical Hamiltonian, so the bridge negates μ.
+function ITensorModels.to_qatlas(m::ITensorModels.Hubbard1D, ::SiteType"Electron")
+    return QAtlas.Hubbard1D(; t=m.t, U=m.U, μ=-m.μ)
+end
+
+function ITensorModels.from_qatlas(qm::QAtlas.Hubbard1D)
+    return ITensorModels.Hubbard1D(; t=qm.t, U=qm.U, μ=-qm.μ)
+end
+
 # --- fetch forwarder ----------------------------------------------------
 #
 # Route `QAtlas.fetch` calls that take an ITensorModels model through
