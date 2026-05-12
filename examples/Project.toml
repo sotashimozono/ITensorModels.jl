@@ -1,0 +1,8 @@
+[deps]
+ITensorModels = "ef2189cb-6e0f-43f0-8f34-d6f851ec88d5"
+Lattice2D = "e8031020-b7ff-4f1d-bee4-f79aea4cf140"
+LatticeCore = "84b1cbd8-bc58-4618-bc4f-b46a399f49f1"
+Plots = "91a5bcdd-55d7-5caf-9e0b-520d859cae80"
+
+[sources]
+ITensorModels = {path = ".."}
