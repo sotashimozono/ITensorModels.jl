@@ -299,4 +299,79 @@ function ITensorModels.build_opsum(
     return opsum
 end
 
+# ---------------------------------------------------------------------
+# User-facing factories
+# ---------------------------------------------------------------------
+
+"""
+    _bounding_extent(lat::AbstractLattice) -> (lo, hi)
+
+Per-axis bounding box of all site positions in `lat`. Internal helper
+used by the ND factories.
+"""
+function _bounding_extent(lat::AbstractLattice)
+    N = num_sites(lat)
+    N >= 1 || error("_bounding_extent: lattice has zero sites")
+    lo = position(lat, 1)
+    hi = lo
+    for k in 2:N
+        p = position(lat, k)
+        lo = min.(lo, p)
+        hi = max.(hi, p)
+    end
+    return lo, hi
+end
+
+"""
+    _make_profile(::Val{2}, R) -> SinSquareProfile(R)
+    _make_profile(::Val{N}, R) -> SinPowerProfile{N}(R)
+
+Pick the right profile constructor for a given power `N`. At `N = 2`
+the canonical SSD profile is used (slightly faster than the equivalent
+`SinPowerProfile{2}`).
+"""
+_make_profile(::Val{2}, R) = SinSquareProfile(R)
+_make_profile(::Val{N}, R) where {N} = SinPowerProfile{N}(R)
+
+function ITensorModels.spherical_ssd(
+    lat::AbstractLattice; radius::Symbol=:inscribed, N::Int=2
+)
+    lo, hi = _bounding_extent(lat)
+    half = (hi - lo) / 2
+    R = if radius === :inscribed
+        minimum(half)
+    elseif radius === :circumscribed
+        sqrt(sum(half .^ 2))
+    else
+        error(
+            "spherical_ssd: radius must be :inscribed or :circumscribed " *
+            "(got :$radius)",
+        )
+    end
+    return RadialEnvelope(
+        BoundingBoxCenter(), EuclideanDistance(), _make_profile(Val(N), R)
+    )
+end
+
+function ITensorModels.cylindrical_ssd(
+    lat::AbstractLattice; axis::Int=1, N::Int=2
+)
+    lo, hi = _bounding_extent(lat)
+    1 <= axis <= length(lo) || error(
+        "cylindrical_ssd: axis=$axis out of range [1, $(length(lo))]"
+    )
+    R = (hi[axis] - lo[axis]) / 2
+    return RadialEnvelope(
+        BoundingBoxCenter(), AxialDistance(axis), _make_profile(Val(N), R)
+    )
+end
+
+function ITensorModels.rectangular_ssd(lat::AbstractLattice; N::Int=2)
+    lo, hi = _bounding_extent(lat)
+    half = (hi - lo) / 2
+    return RadialEnvelope(
+        BoundingBoxCenter(), AxisProductDistance(), _make_profile(Val(N), half)
+    )
+end
+
 end # module LatticeCoreExt
