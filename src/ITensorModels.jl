@@ -14,8 +14,8 @@ export site_weight, bond_weight
 export ModulatedModel, modulated
 export AbstractModulationND
 export AbstractCenter, GeometricCenter, BoundingBoxCenter, ExplicitCenter
-export AbstractDistance, EuclideanDistance, AxialDistance, PerpendicularDistance,
-    AxisProductDistance
+export AbstractDistance,
+    EuclideanDistance, AxialDistance, PerpendicularDistance, AxisProductDistance
 export AbstractProfile, SinSquareProfile, SinPowerProfile, CosineRampProfile
 export RadialEnvelope
 export distance_at_position, distance_at, center_position, profile_value, site_envelope

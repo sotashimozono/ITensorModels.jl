@@ -2,11 +2,7 @@ using ITensorModels
 using Test
 
 @testset "RadialEnvelope: type construction" begin
-    env = RadialEnvelope(
-        BoundingBoxCenter(),
-        EuclideanDistance(),
-        SinSquareProfile(3.0),
-    )
+    env = RadialEnvelope(BoundingBoxCenter(), EuclideanDistance(), SinSquareProfile(3.0))
     @test env isa RadialEnvelope
     @test env isa AbstractModulationND
     @test env isa AbstractModulation
@@ -47,7 +43,8 @@ end
     # In 2D, perpendicular distance to axis 1 is |Δr[2]|.
     @test distance_at_position(PerpendicularDistance(1), [3.0, 4.0], [0.0, 0.0]) ≈ 4.0
     # In 3D, perpendicular to axis 3 is sqrt(Δr[1]^2 + Δr[2]^2).
-    @test distance_at_position(PerpendicularDistance(3), [3.0, 4.0, 5.0], [0.0, 0.0, 0.0]) ≈ 5.0
+    @test distance_at_position(PerpendicularDistance(3), [3.0, 4.0, 5.0], [0.0, 0.0, 0.0]) ≈
+        5.0
     @test distance_at_position(PerpendicularDistance(2), [3.0, 4.0, 5.0], [0.0, 0.0, 0.0]) ≈
         sqrt(3.0^2 + 5.0^2)
 end
