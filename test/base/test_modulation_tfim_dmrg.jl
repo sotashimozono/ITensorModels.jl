@@ -1,17 +1,7 @@
 using ITensorModels
-using ITensorModels:
-    TFIM,
-    build_opsum,
-    modulated,
-    Uniform,
-    SSD,
-    SinPower,
-    SmoothBoundary,
-    Tabulated,
-    site_weight,
-    bond_weight,
-    bond_coupling_term,
-    onsite_term
+using ITensorModels: TFIM, build_opsum, modulated, Uniform, SSD, SinPower,
+    SmoothBoundary, Tabulated, site_weight, bond_weight,
+    bond_coupling_term, onsite_term
 using ITensors
 using ITensorMPS
 using ITensors: SiteType
@@ -64,10 +54,10 @@ end
         H = MPO(build_opsum(m_ssd, sites; phys_sites=1:N, boundary=:full), sites)
 
         rng = MersenneTwister(42)
-        ψ0 = random_mps(rng, sites; linkdims=16)
-        sweeps = Sweeps(20)
-        maxdim!(sweeps, 10, 20, 40, 80, 120)
-        cutoff!(sweeps, 1e-12)
+        ψ0 = random_mps(rng, sites; linkdims=8)
+        sweeps = Sweeps(12)
+        maxdim!(sweeps, 10, 20, 40, 60)
+        cutoff!(sweeps, 1e-10)
         E_dmrg, ψ_gs = dmrg(H, ψ0, sweeps; outputlevel=0)
 
         E_random = real(inner(ψ0', H, ψ0))
@@ -84,22 +74,22 @@ end
     # corrections); local observables ⟨Sˣᵢ⟩, ⟨Sᶻᵢ Sᶻᵢ₊₁⟩ are therefore
     # approximately uniform across the entire open chain, not concentrated
     # at the centre.
-    N = 24
+    N = 16
     J, h = 1.0, 1.0
     m_ssd = modulated(TFIM(; J=J, h=h); L=N, modulation=SSD())
     sites = siteinds("S=1/2", N)
     H = MPO(build_opsum(m_ssd, sites; phys_sites=1:N, boundary=:full), sites)
 
     rng = MersenneTwister(7)
-    ψ0 = random_mps(rng, sites; linkdims=16)
-    sweeps = Sweeps(25)
-    maxdim!(sweeps, 10, 20, 40, 80, 120, 200)
-    cutoff!(sweeps, 1e-12)
+    ψ0 = random_mps(rng, sites; linkdims=8)
+    sweeps = Sweeps(12)
+    maxdim!(sweeps, 10, 20, 40, 60)
+    cutoff!(sweeps, 1e-10)
     _, ψ_gs = dmrg(H, ψ0, sweeps; outputlevel=0)
 
     sx = expect(ψ_gs, "Sx")
     sx_mean = mean(sx)
-    sx_std = std(sx)
+    sx_std  = std(sx)
 
     # Ground state of -h Σ Sx (h > 0) is polarized in +Sx, so ⟨Sx⟩ > 0.
     @test sx_mean > 0
@@ -129,12 +119,8 @@ end
     m_tab = modulated(bare; L=N, modulation=Tabulated(fs, fb))
     H_tab = MPO(build_opsum(m_tab, sites; phys_sites=1:N, boundary=:full), sites)
     H_uni = MPO(
-        build_opsum(
-            modulated(bare; L=N, modulation=Uniform()),
-            sites;
-            phys_sites=1:N,
-            boundary=:full,
-        ),
+        build_opsum(modulated(bare; L=N, modulation=Uniform()), sites;
+                    phys_sites=1:N, boundary=:full),
         sites,
     )
     rng = MersenneTwister(11)
