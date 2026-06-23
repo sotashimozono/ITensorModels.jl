@@ -15,7 +15,7 @@ combination. The generic method throws so that unsupported requests
 fail loud rather than silently returning a bogus operator name.
 """
 function onsite_observable_op(m::AbstractLatticeModel, name::Symbol)
-    error(
+    return error(
         "onsite_observable_op: model $(typeof(m)) has no observable `$name` on site $(site_type(m))",
     )
 end
