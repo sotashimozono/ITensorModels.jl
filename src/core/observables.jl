@@ -31,7 +31,7 @@ gives the unnormalised total (`Σᵢ op_i`).
 
 For the per-site mean pass `weights = fill(1 / length(phys_sites), …)`;
 for bulk-only measurements on aux-sandwiched layouts
-(e.g. [`ThermalMPS.AuxChain`](@ref)) pass the bulk `phys_sites`
+(e.g. `ThermalMPS.AuxChain`) pass the bulk `phys_sites`
 directly.
 """
 function build_onsite_observable_opsum(
