@@ -7,7 +7,7 @@
 
 <a id="badge-top"></a>
 [![codecov](https://codecov.io/gh/sotashimozono/template.jl/graph/badge.svg?token=Q3oEEiz9A2)](https://codecov.io/gh/sotashimozono/template.jl)
-[![Build Status](https://github.com/sotashimozono/ITensorModels.jl/actions/workflows/CI.yml/badge.svg?branch=main)](https://github.com/sotashimozono/ITensorModels.jl/actions/workflows/CI.yml?query=branch%3Amain)
+[![Build Status](https://github.com/lab-sotashimozono/ITensorModels.jl/actions/workflows/CI.yml/badge.svg?branch=main)](https://github.com/lab-sotashimozono/ITensorModels.jl/actions/workflows/CI.yml?query=branch%3Amain)
 [![License](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
 this repository is made for template folder for developing julia project.  

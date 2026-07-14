@@ -31,7 +31,7 @@ makedocs(;
 )
 
 deploydocs(;
-    repo="github.com/sotashimozono/ITensorModels.jl.git",
+    repo="github.com/lab-sotashimozono/ITensorModels.jl.git",
     devbranch="main",
     push_preview=true,
 )
