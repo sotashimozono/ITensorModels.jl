@@ -15,7 +15,7 @@ QAtlas = "2bd488d2-d3e6-46ee-afb3-5515643db0c7"
 
 [sources.ITensorSiteKit]
 rev = "v0.3.0"
-url = "https://github.com/sotashimozono/ITensorSiteKit.jl"
+url = "https://github.com/lab-sotashimozono/ITensorSiteKit.jl"
 
 [extensions]
 LatticeCoreExt = "LatticeCore"
