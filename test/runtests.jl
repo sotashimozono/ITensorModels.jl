@@ -2,6 +2,29 @@ ENV["GKSwstype"] = "100"
 
 using ITensorModels, Test
 
+# ── Shared namespace (load-order coupling; see below) ────────────────
+#
+# Every test file is `include`d into `Main`, so in a FULL run `Main` ends up holding the
+# UNION of every file's `using` lines — and the suite silently came to depend on that.
+# Concretely: 33 files call `site_type(...)` or construct `SSD()`, but only THREE ever
+# import `site_type`, and NOT ONE imports `SSD` (it is a `LatticeCore` export). The other
+# 30 worked purely because some alphabetically-earlier file had already pulled the name
+# into `Main`.
+#
+# Under sharding a file can be the ONLY file its job runs, so that leakage evaporates and
+# the shard dies with `UndefVarError: SSD not defined in Main`. Hoist the shared namespace
+# here so every shard sees exactly what a full run sees. This is strictly MORE binding than
+# before (it can only add names, never remove them), so it cannot change any assertion.
+using Random
+using LinearAlgebra
+using Statistics
+using ITensors
+using ITensorMPS
+using LatticeCore
+using Lattice2D
+using QuasiCrystal
+using ITensorModels: site_type, bond_term, build_opsum, local_ham_terms
+
 # Canonical universe + completeness guard — the single source of truth, shared
 # VERBATIM with the shard planner (test/ci/plan_shards.jl).
 include(joinpath(@__DIR__, "ci", "universe.jl"))
