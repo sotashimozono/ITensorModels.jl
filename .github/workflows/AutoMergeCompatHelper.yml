@@ -1,0 +1,24 @@
+name: AutoMerge CompatHelper
+
+# Fires when CI finishes; merges the PR only if CI succeeded AND it is a CompatHelper
+# branch. This is the CI-green gate (native auto-merge cannot gate on CI here — no branch
+# protection). Reusable: lab-sotashimozono/.github .../automerge-compathelper.yml.
+on:
+  workflow_run:
+    workflows: [CI]
+    types: [completed]
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  automerge:
+    if: >
+      github.event.workflow_run.conclusion == 'success' &&
+      startsWith(github.event.workflow_run.head_branch, 'compathelper/')
+    uses: lab-sotashimozono/.github/.github/workflows/automerge-compathelper.yml@main
+    with:
+      runner: '"ubuntu-latest"'
+      head_branch: ${{ github.event.workflow_run.head_branch }}
+    secrets: inherit
